@@ -1,0 +1,28 @@
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server-dashboard
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - SERVER_IP=${SERVER_IP:-localhost}
+      - SERVER_HOSTNAME=${SERVER_HOSTNAME:-localhost}
+      - HERMES_PORT=${HERMES_PORT:-9119}
+      - OLLAMA_PORT=${OLLAMA_PORT:-11434}
+      - NGINX_PORT=${NGINX_PORT:-80}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
