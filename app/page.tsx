@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { SystemMetrics } from '@/components/system-metrics';
 import { EventFeed } from '@/components/event-feed';
+import { AiAnalysis } from '@/components/ai-analysis';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 interface ServiceStatus {
@@ -32,6 +33,7 @@ interface DashboardData {
 const NAV = [
   { id: 'system', label: 'System' },
   { id: 'events', label: 'Events' },
+  { id: 'ai',     label: 'AI'     },
 ];
 
 
@@ -195,6 +197,11 @@ export default function Page() {
         {/* Event Feed */}
         <div className="mb-14">
           <EventFeed />
+        </div>
+
+        {/* AI Health Analysis */}
+        <div className="mb-14">
+          <AiAnalysis />
         </div>
 
         {/* Footer */}
