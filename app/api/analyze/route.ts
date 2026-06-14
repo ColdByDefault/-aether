@@ -95,7 +95,7 @@ export async function POST(): Promise<Response> {
     const res = await fetch(`${OLLAMA_HOST}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: false }),
+      body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: false, think: false }),
       signal: AbortSignal.timeout(120_000),
     });
 
