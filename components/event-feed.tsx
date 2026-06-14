@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Activity } from 'lucide-react';
 import type { SystemEvent } from '@/app/api/events/route';
 
 function severityDot(severity: SystemEvent['severity']): string {
@@ -48,7 +49,7 @@ export function EventFeed() {
   return (
     <section id="events" className="scroll-mt-20">
       <div className="mb-3 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-        <span className="accent-text">##</span>
+        <Activity className="h-3.5 w-3.5 text-primary" />
         <span className="uppercase tracking-wider">Recent Events</span>
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">

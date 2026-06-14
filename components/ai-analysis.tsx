@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Bot } from 'lucide-react';
 
 interface AnalysisResult {
   analysis: string;
@@ -41,7 +42,7 @@ export function AiAnalysis() {
   return (
     <section id="ai" className="scroll-mt-20">
       <div className="mb-3 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-        <span className="accent-text">##</span>
+        <Bot className="h-3.5 w-3.5 text-primary" />
         <span className="uppercase tracking-wider">AI Health Analysis</span>
         <span className="flex-1 border-t border-border" />
         {result && (

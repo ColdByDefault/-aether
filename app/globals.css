@@ -178,7 +178,7 @@
   }
 
   .term-dot {
-    @apply inline-block rounded-full flex-shrink-0;
+    @apply inline-block rounded-full shrink-0;
   }
 
   .panel {
@@ -190,6 +190,6 @@
   }
 
   .service-icon {
-    @apply w-8 h-8 object-contain flex-shrink-0;
+    @apply w-8 h-8 object-contain shrink-0;
   }
 }
