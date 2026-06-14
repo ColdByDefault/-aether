@@ -1,4 +1,5 @@
 import os from 'os';
+import fs from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -30,6 +31,25 @@ interface MetricsResponse {
   hostname: string;
   platform: string;
   timestamp: string;
+}
+
+async function getMemory(): Promise<{ total: number; used: number; free: number; usedPercent: number }> {
+  try {
+    const data = await fs.readFile('/host/proc/meminfo', 'utf8');
+    const get = (key: string) => {
+      const m = data.match(new RegExp(`^${key}:\\s+(\\d+)`, 'm'));
+      return m ? parseInt(m[1], 10) * 1024 : 0;
+    };
+    const total = get('MemTotal');
+    const available = get('MemAvailable');
+    const used = total - available;
+    return { total, used, free: available, usedPercent: Math.round((used / total) * 1000) / 10 };
+  } catch {
+    const total = os.totalmem();
+    const free = os.freemem();
+    const used = total - free;
+    return { total, used, free, usedPercent: Math.round((used / total) * 1000) / 10 };
+  }
 }
 
 function cpuSnapshot(): { idle: number; total: number } {
@@ -86,10 +106,7 @@ async function refresh(): Promise<void> {
   if (activeRefresh) return activeRefresh;
   activeRefresh = (async () => {
     try {
-      const totalMem = os.totalmem();
-      const freeMem = os.freemem();
-      const usedMem = totalMem - freeMem;
-      const [cpuUsage, disk] = await Promise.all([getCpuUsage(), getDiskInfo()]);
+      const [cpuUsage, disk, memory] = await Promise.all([getCpuUsage(), getDiskInfo(), getMemory()]);
       latest = {
         cpu: {
           usedPercent: cpuUsage,
@@ -97,7 +114,7 @@ async function refresh(): Promise<void> {
           model: os.cpus()[0]?.model?.trim() ?? 'Unknown',
           loadAvg: os.loadavg().map((n) => Math.round(n * 100) / 100),
         },
-        memory: { total: totalMem, used: usedMem, free: freeMem, usedPercent: Math.round((usedMem / totalMem) * 1000) / 10 },
+        memory,
         disk,
         uptime: os.uptime(),
         hostname: process.env.SERVER_HOSTNAME || os.hostname(),

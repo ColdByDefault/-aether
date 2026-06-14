@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SystemMetrics } from '@/components/system-metrics';
+import { EventFeed } from '@/components/event-feed';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 interface ServiceStatus {
@@ -30,6 +31,7 @@ interface DashboardData {
 
 const NAV = [
   { id: 'system', label: 'System' },
+  { id: 'events', label: 'Events' },
 ];
 
 
@@ -190,7 +192,11 @@ export default function Page() {
           )}
         </div>
 
-       
+        {/* Event Feed */}
+        <div className="mb-14">
+          <EventFeed />
+        </div>
+
         {/* Footer */}
         <footer className="border-t border-border pt-6">
           <div className="flex flex-col gap-2 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
