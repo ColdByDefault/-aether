@@ -1,7 +1,7 @@
 import type { SystemEvent } from '@/app/api/events/route';
 
 const OLLAMA_HOST = `http://host.docker.internal:${process.env.OLLAMA_PORT ?? '11434'}`;
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'llama3';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'qwen3:8b';
 
 interface MetricsData {
   cpu: { usedPercent: number; cores: number; loadAvg: number[] };

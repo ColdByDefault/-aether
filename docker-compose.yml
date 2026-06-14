@@ -4,8 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: server-dashboard
-    ports:
-      - "${HOST_PORT:-3000}:3000"
+    network_mode: host
     env_file:
       - .env
     environment:
@@ -16,7 +15,7 @@ services:
       - OLLAMA_PORT=${OLLAMA_PORT:-11434}
       - NGINX_PORT=${NGINX_PORT:-80}
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:127.0.0.1"
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
