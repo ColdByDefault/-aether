@@ -30,9 +30,6 @@ interface DashboardData {
 
 const NAV = [
   { id: 'system', label: 'System' },
-  { id: 'features', label: 'Features' },
-  { id: 'architecture', label: 'Architecture' },
-  { id: 'setup', label: 'Setup' },
 ];
 
 
@@ -60,7 +57,7 @@ export default function Page() {
   useEffect(() => {
     fetchStatus();
     updateTime();
-    const statusInterval = setInterval(fetchStatus, 5000);
+    const statusInterval = setInterval(fetchStatus, 30_000);
     const timeInterval = setInterval(updateTime, 1000);
     return () => {
       clearInterval(statusInterval);
@@ -96,17 +93,9 @@ export default function Page() {
             <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground md:text-3xl">
               aether <span className="text-muted-foreground">— system monitoring daemon</span>
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              A terminal-native monitoring daemon for self-hosted infrastructure. Tracks host
-              vitals and probes container services in real time. Single binary, single container,
-              no telemetry.
-            </p>
             <div className="mt-4 flex flex-wrap items-center gap-2 font-mono text-xs">
-              <span className="border border-border bg-muted/40 px-2 py-1 text-muted-foreground">
-                docker · node
-              </span>
               <span className="inline-flex items-center gap-1.5 border border-border bg-muted/40 px-2 py-1 text-muted-foreground">
-                <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
+                <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-green-500'}`} />
                 {error ? 'offline' : 'online'}
               </span>
             </div>
@@ -205,7 +194,7 @@ export default function Page() {
         {/* Footer */}
         <footer className="border-t border-border pt-6">
           <div className="flex flex-col gap-2 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>aether-daemon · MIT licensed · self-hosted</span>
+            <span>aether-daemon</span>
             <span className="text-muted-foreground/60">
               {data ? `host ${data.ip}` : 'host —'} · {time || '—'}
             </span>

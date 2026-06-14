@@ -49,3 +49,8 @@ Thumbs.db
 
 # Turbo
 .turbo
+
+.pnpm-store
+
+.agents
+.claude

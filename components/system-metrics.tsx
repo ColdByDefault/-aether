@@ -114,7 +114,7 @@ export function SystemMetrics() {
     };
 
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 3000);
+    const interval = setInterval(fetchMetrics, 15_000);
 
     return () => {
       active = false;
@@ -130,7 +130,7 @@ export function SystemMetrics() {
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
           <span className={`term-dot ${error ? 'bg-destructive' : 'bg-primary'} h-1.5 w-1.5`} />
-          {error ? 'error' : loading ? 'polling' : 'live · 3s'}
+          {error ? 'error' : loading ? 'polling' : 'live · 15s'}
         </span>
       </div>
 

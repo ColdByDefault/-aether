@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import http from 'http';
 
 const execAsync = promisify(exec);
 
@@ -39,14 +40,22 @@ interface RawCronJob {
   last_error?: string | null;
 }
 
+function httpGet(url: string, timeoutMs: number, headers?: Record<string, string>): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const req = http.get(url, { timeout: timeoutMs, headers }, (res) => {
+      let body = '';
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => resolve({ status: res.statusCode ?? 0, body }));
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+  });
+}
+
 async function checkHttp(name: string, url: string): Promise<ServiceStatus> {
   try {
-    const { stdout } = await execAsync(
-      `curl -s -o /dev/null -w "%{http_code}" --max-time 3 "${url}"`
-    );
-    const code = parseInt(stdout.trim(), 10);
-    const running = code >= 200 && code < 500;
-    return { name, running };
+    const { status } = await httpGet(url, 3000);
+    return { name, running: status >= 200 && status < 500 };
   } catch {
     return { name, running: false, error: 'Unreachable' };
   }
@@ -66,23 +75,20 @@ async function checkHermesWithCron(
   port: string
 ): Promise<{ service: ServiceStatus; cronJobs: CronJob[] }> {
   try {
-    const { stdout: html } = await execAsync(
-      `curl -s --max-time 5 "http://${host}:${port}/"`
-    );
+    const { status, body: html } = await httpGet(`http://${host}:${port}/`, 5000);
 
-    // If the page doesn't look like the Hermes dashboard, mark it down
-    if (!html.includes('__HERMES_SESSION_TOKEN__')) {
+    if (status < 200 || status >= 500 || !html.includes('__HERMES_SESSION_TOKEN__')) {
       return { service: { name: 'Hermes Agent', running: false, error: 'Unexpected response' }, cronJobs: [] };
     }
 
     const service: ServiceStatus = { name: 'Hermes Agent', running: true };
-
     const match = html.match(/__HERMES_SESSION_TOKEN__="([^"]+)"/);
     if (!match) return { service, cronJobs: [] };
 
-    const token = match[1];
-    const { stdout: cronRaw } = await execAsync(
-      `curl -s --max-time 5 -H "Authorization: Bearer ${token}" "http://${host}:${port}/api/cron/jobs"`
+    const { body: cronRaw } = await httpGet(
+      `http://${host}:${port}/api/cron/jobs`,
+      5000,
+      { Authorization: `Bearer ${match[1]}` }
     );
 
     const parsed: unknown = JSON.parse(cronRaw);
@@ -105,35 +111,46 @@ async function checkHermesWithCron(
   }
 }
 
+// Background refresh — computes once every 30s, requests always read from memory.
+let latest: StatusResponse | null = null;
+let activeRefresh: Promise<void> | null = null;
+
+async function refresh(): Promise<void> {
+  if (activeRefresh) return activeRefresh;
+  activeRefresh = (async () => {
+    try {
+      const ip = process.env.SERVER_IP || 'unknown';
+      const host = 'host.docker.internal';
+      const hermesPort = process.env.HERMES_PORT || '9119';
+      const nginxPort = process.env.NGINX_PORT || '80';
+
+      const [hermes, docker, nginx] = await Promise.all([
+        checkHermesWithCron(host, hermesPort),
+        checkDocker(),
+        checkHttp('Nginx', `http://${host}:${nginxPort}/`),
+      ]);
+
+      latest = {
+        ip,
+        timestamp: new Date().toISOString(),
+        services: [docker, hermes.service, nginx],
+        cronJobs: hermes.cronJobs,
+      };
+    } catch (err) {
+      console.error('Status refresh error:', err);
+    } finally {
+      activeRefresh = null;
+    }
+  })();
+  return activeRefresh;
+}
+
+refresh();
+setInterval(refresh, 30_000);
+
 export async function GET(): Promise<Response> {
-  try {
-    const ip = process.env.SERVER_IP || 'unknown';
-    const host = 'host.docker.internal';
-    const hermesPort = process.env.HERMES_PORT || '9119';
-    const ollamaPort = process.env.OLLAMA_PORT || '11434';
-    const nginxPort = process.env.NGINX_PORT || '80';
-    const timestamp = new Date().toISOString();
-
-    const [hermes, docker, ollama, nginx] = await Promise.all([
-      checkHermesWithCron(host, hermesPort),
-      checkDocker(),
-      checkHttp('Ollama', `http://${host}:${ollamaPort}/`),
-      checkHttp('Nginx', `http://${host}:${nginxPort}/`),
-    ]);
-
-    const response: StatusResponse = {
-      ip,
-      timestamp,
-      services: [docker, hermes.service, ollama, nginx],
-      cronJobs: hermes.cronJobs,
-    };
-
-    return Response.json(response);
-  } catch (error) {
-    console.error('Error fetching status:', error);
-    return Response.json(
-      { error: 'Failed to fetch system status' },
-      { status: 500 }
-    );
-  }
+  if (!latest) await refresh();
+  return latest
+    ? Response.json(latest)
+    : Response.json({ error: 'Status not yet available' }, { status: 503 });
 }
