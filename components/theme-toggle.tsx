@@ -18,8 +18,7 @@ export function ThemeToggle() {
       className="inline-flex items-center gap-2 border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
       aria-label="Toggle color theme"
     >
-      <span className="accent-text">$</span>
-      <span>theme</span>
+      <span className="accent-text">$theme</span>
       <span className="text-foreground">{mounted ? (isDark ? 'dark' : 'light') : '...'}</span>
     </button>
   )

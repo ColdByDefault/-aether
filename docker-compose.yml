@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: server-dashboard
     network_mode: host
+    pid: "host"
+    privileged: true
     env_file:
       - .env
     environment:

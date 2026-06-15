@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -8,6 +8,8 @@ interface AnalysisResult {
   analysis: string;
   model: string;
   timestamp: string;
+  nextRun: string;
+  auto: boolean;
 }
 
 function parseObservations(text: string): string[] {
@@ -20,8 +22,19 @@ function parseObservations(text: string): string[] {
 
 export function AiAnalysis() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [nextRun, setNextRun] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/analyze')
+      .then(r => r.json())
+      .then(data => {
+        if (data?.nextRun) setNextRun(data.nextRun);
+        if (data?.analysis) setResult(data as AnalysisResult);
+      })
+      .catch(() => {});
+  }, []);
 
   const analyze = async () => {
     setLoading(true);
@@ -30,7 +43,9 @@ export function AiAnalysis() {
       const res = await fetch('/api/analyze', { method: 'POST' });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error ?? 'Analysis failed');
-      setResult(data as AnalysisResult);
+      const r = data as AnalysisResult;
+      setResult(r);
+      if (r.nextRun) setNextRun(r.nextRun);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -39,6 +54,9 @@ export function AiAnalysis() {
   };
 
   const observations = result ? parseObservations(result.analysis) : [];
+  const nextRunLabel = nextRun
+    ? new Date(nextRun).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   return (
     <section id="ai" className="scroll-mt-20">
@@ -49,6 +67,7 @@ export function AiAnalysis() {
         {result && (
           <span className="text-muted-foreground/60">
             {result.model} · {new Date(result.timestamp).toTimeString().slice(0, 5)}
+            {result.auto && <span className="ml-1.5 text-muted-foreground/40">auto</span>}
           </span>
         )}
       </div>
@@ -59,6 +78,11 @@ export function AiAnalysis() {
             {loading ? 'querying model...' : result ? 'analysis ready' : 'idle'}
           </span>
           <span className="flex-1" />
+          {nextRunLabel && !loading && (
+            <span className="font-mono text-xs text-muted-foreground/50 mr-3">
+              daily · {nextRunLabel} <span className="ml-1 text-muted-foreground/40 border border-border p-1">-agent</span>
+            </span>
+          )}
           <Button
             variant="link"
             size="xs"

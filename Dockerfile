@@ -3,18 +3,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+# node-pty requires native compilation tools
+RUN apk add --no-cache python3 make g++ linux-headers
 
-# Install dependencies (use npm if no lock file present)
-RUN if [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install; \
-    elif [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-    else npm ci; fi
+COPY package.json pnpm-lock.yaml* ./
+RUN npm install -g pnpm && pnpm install
 
-# Copy source code
 COPY . .
-
-# Build application
 RUN npm run build
 
 # Production stage
@@ -22,27 +17,21 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install curl and docker CLI for health checks and service detection
-RUN apk add --no-cache curl docker-cli iproute2
+# curl/docker-cli/iproute2: existing runtime deps
+# util-linux: provides nsenter (host shell access)
+# python3/make/g++/linux-headers: compile node-pty native module
+RUN apk add --no-cache curl docker-cli iproute2 util-linux python3 make g++ linux-headers
 
-# Copy package files from builder
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+COPY package.json pnpm-lock.yaml* ./
+RUN npm install -g pnpm && pnpm install --prod
 
-# Install production dependencies only
-RUN if [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install --prod; \
-    elif [ -f yarn.lock ]; then yarn install --prod --frozen-lockfile; \
-    else npm ci --only=production; fi
-
-# Copy built application from builder
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY server.mjs ./
 
-# Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
-# Start application
-CMD ["npm", "start"]
+CMD ["node", "server.mjs"]

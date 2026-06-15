@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Monitor, Zap, Activity, Bot, Server, Container, Network, ArrowLeftRight, Clock, Globe } from 'lucide-react';
+import { Monitor, Zap, Activity, Bot, Server, Container, Network, ArrowLeftRight, Clock, Globe, TerminalSquare } from 'lucide-react';
 import { SystemMetrics } from '@/components/system-metrics';
 import { PowerMetrics } from '@/components/power-metrics';
 import { EventFeed } from '@/components/event-feed';
@@ -66,10 +66,11 @@ interface DashboardData {
 }
 
 const NAV = [
-  { id: 'system',    label: 'System',    Icon: Monitor  },
-  { id: 'power',     label: 'Power',     Icon: Zap      },
-  { id: 'events',    label: 'Events',    Icon: Activity },
-  { id: 'ai',        label: 'AI',        Icon: Bot      },
+  { id: 'system',    label: 'System',    Icon: Monitor        },
+  { id: 'power',     label: 'Power',     Icon: Zap            },
+  { id: 'events',    label: 'Events',    Icon: Activity       },
+  { id: 'ai',        label: 'AI',        Icon: Bot            },
+  { id: 'terminal',  label: 'Terminal',  Icon: TerminalSquare },
 ];
 
 function PanelHeader({ icon: Icon, label, right }: {
@@ -128,7 +129,7 @@ export default function Page() {
             {NAV.map(({ id, label, Icon }) => (
               <Link
                 key={id}
-                href={`#${id}`}
+                href={id === 'terminal' ? '/terminal' : `#${id}`}
                 className="flex items-center gap-1.5 transition-colors hover:text-foreground"
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -141,7 +142,7 @@ export default function Page() {
             className="items-center gap-2 font-mono text-xs text-muted-foreground sm:flex hover:text-foreground"
           >
             <Container className="h-3.5 w-3.5" />
-            <span className="">Dozzle dashboard</span>
+            <span className="">Dozzle</span>
           </Link>
           <ThemeToggle />
         </div>

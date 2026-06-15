@@ -13,6 +13,16 @@ interface ServiceStatus { name: string; running: boolean }
 interface CronJob { name: string; enabled: boolean; state: string; nextRun: string | null }
 interface StatusData { services: ServiceStatus[]; cronJobs: CronJob[] }
 
+export interface AnalysisResult {
+  analysis: string;
+  model: string;
+  timestamp: string;
+  nextRun: string;
+  auto: boolean;
+}
+
+let lastResult: AnalysisResult | null = null;
+
 function fmtGb(bytes: number) { return `${(bytes / 1073741824).toFixed(1)} GB`; }
 
 function buildPrompt(
@@ -86,11 +96,19 @@ async function gatherData() {
   };
 }
 
-export async function POST(): Promise<Response> {
+function nextScheduledTime(): Date {
+  const hour   = parseInt(process.env.ANALYZE_HOUR   ?? '8', 10);
+  const minute = parseInt(process.env.ANALYZE_MINUTE ?? '0', 10);
+  const next = new Date();
+  next.setHours(hour, minute, 0, 0);
+  if (next <= new Date()) next.setDate(next.getDate() + 1);
+  return next;
+}
+
+async function runAnalysis(auto = false): Promise<AnalysisResult | { error: string }> {
   const data = await gatherData();
   const prompt = buildPrompt(data.metrics, data.status, data.events);
 
-  let analysis: string;
   try {
     const res = await fetch(`${OLLAMA_HOST}/api/generate`, {
       method: 'POST',
@@ -101,22 +119,54 @@ export async function POST(): Promise<Response> {
 
     if (!res.ok) {
       const text = await res.text();
-      return Response.json(
-        { error: `Ollama ${res.status}: ${text.slice(0, 200)}` },
-        { status: 502 },
-      );
+      return { error: `Ollama ${res.status}: ${text.slice(0, 200)}` };
     }
 
     const json = await res.json();
-    analysis = (json.response as string).trim();
+    const result: AnalysisResult = {
+      analysis: (json.response as string).trim(),
+      model: OLLAMA_MODEL,
+      timestamp: new Date().toISOString(),
+      nextRun: nextScheduledTime().toISOString(),
+      auto,
+    };
+    lastResult = result;
+    return result;
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    return Response.json({ error: `Ollama unreachable: ${msg}` }, { status: 502 });
+    return { error: `Ollama unreachable: ${msg}` };
   }
+}
 
-  return Response.json({
-    analysis,
-    model: OLLAMA_MODEL,
-    timestamp: new Date().toISOString(),
-  });
+function scheduleDailyAnalysis() {
+  const next = nextScheduledTime();
+  const delay = next.getTime() - Date.now();
+  setTimeout(() => {
+    runAnalysis()
+      .then(r => 'error' in r
+        ? console.error('[analyze] scheduled run failed:', r.error)
+        : console.log('[analyze] scheduled run complete at', r.timestamp),
+      )
+      .catch(err => console.error('[analyze] scheduled run error:', err))
+      .finally(() => scheduleDailyAnalysis());
+  }, delay);
+  console.log(`[analyze] next auto-run scheduled for ${next.toISOString()}`);
+}
+
+scheduleDailyAnalysis();
+
+export async function GET(): Promise<Response> {
+  const nextRun = nextScheduledTime().toISOString();
+  if (!lastResult) {
+    return Response.json({ nextRun }, { status: 404 });
+  }
+  return Response.json({ ...lastResult, nextRun });
+}
+
+export async function POST(): Promise<Response> {
+  const result = await runAnalysis();
+  if ('error' in result) {
+    return Response.json({ error: result.error }, { status: 502 });
+  }
+  return Response.json(result);
 }
