@@ -71,14 +71,6 @@ export default function Page() {
               <Container className="h-3.5 w-3.5" />
               <span>Dozzle</span>
             </Link>
-            <Link
-              href="http://192.168.2.100:3003/"
-              target="_blank"
-              className="items-center gap-2 font-mono text-xs text-muted-foreground sm:flex hover:text-foreground"
-            >
-              <MessagesSquare className="h-3.5 w-3.5" />
-              <span>WebUI</span>
-            </Link>
           </div>
           <ThemeToggle />
         </div>
