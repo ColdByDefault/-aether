@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import VersionDisplay from "@/components/VersionDisplay";
 import { Badge } from '@/components/ui/badge';
 import { AptReportDialog } from '@/components/apt-report-dialog';
+import { HermesTriggerButton } from '@/components/hermes-trigger-button';
 import Link from 'next/link';
 
 
@@ -428,6 +429,9 @@ export default function Page() {
                             >
                               {statusLabel}
                             </span>
+                            {!job.noAgent && (
+                              <HermesTriggerButton jobId={job.id} />
+                            )}
                             {!job.noAgent && (
                               <AptReportDialog jobName={job.name} />
                             )}
