@@ -87,7 +87,7 @@ export function AptReportDialog({ jobName }: Props) {
                   <span className={statusColor}>status: {report.status}</span>
                 )}
               </div>
-              <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground/85">
+              <pre className="whitespace-pre-wrap wrap-break-word font-mono text-xs leading-relaxed text-foreground/85">
                 {report.text}
               </pre>
             </>

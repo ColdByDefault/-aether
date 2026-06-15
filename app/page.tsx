@@ -11,6 +11,8 @@ import VersionDisplay from "@/components/VersionDisplay";
 import { Badge } from '@/components/ui/badge';
 import { AptReportDialog } from '@/components/apt-report-dialog';
 import { HermesTriggerButton } from '@/components/hermes-trigger-button';
+import { CpuTemp } from '@/components/cpu-temp';
+import { SwapUsage } from '@/components/swap-usage';
 import Link from 'next/link';
 
 
@@ -304,7 +306,15 @@ export default function Page() {
             </div>
           </div>
 
-          {/* ── ROW 3: Activity + Network ── */}
+          {/* ── ROW 3: CPU Temp + Swap ── */}
+          <div className="md:col-span-1 xl:col-span-2">
+            <CpuTemp />
+          </div>
+          <div className="md:col-span-1 xl:col-span-2">
+            <SwapUsage />
+          </div>
+
+          {/* ── ROW 4: Activity + Network ── */}
 
           {/* Events (xl: 2 cols) */}
           <div className="md:col-span-2 xl:col-span-2">
