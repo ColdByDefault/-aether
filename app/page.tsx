@@ -7,6 +7,8 @@ import { PowerMetrics } from '@/components/power-metrics';
 import { EventFeed } from '@/components/event-feed';
 import { AiAnalysis } from '@/components/ai-analysis';
 import { ThemeToggle } from '@/components/theme-toggle';
+import VersionDisplay from "@/components/VersionDisplay";
+
 
 interface ServiceStatus {
   name: string;
@@ -353,6 +355,10 @@ export default function Page() {
       <footer className="border-t border-border px-4 py-4 lg:px-6">
         <div className="flex flex-col gap-1 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>aether-daemon</span>
+                    <VersionDisplay
+            className="text-xs text-muted-foreground"
+            titleLabel="Daemon version"
+          />
           <span className="text-muted-foreground/50">{data ? `host ${data.ip}` : 'host —'} · {time || '—'}</span>
         </div>
       </footer>

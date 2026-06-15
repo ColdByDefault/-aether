@@ -27,8 +27,12 @@ export interface PowerData {
   timestamp: string;
 }
 
-const SYS = existsSync('/host/proc') ? '/host/sys' : '/sys';
-const POWER_SUPPLY = `${SYS}/class/power_supply`;
+const HOST_POWER_SUPPLY = '/host/sys/class/power_supply';
+const LOCAL_POWER_SUPPLY = '/sys/class/power_supply';
+
+function getPowerSupply(): string {
+  return existsSync(HOST_POWER_SUPPLY) ? HOST_POWER_SUPPLY : LOCAL_POWER_SUPPLY;
+}
 
 async function readField(dir: string, field: string): Promise<string> {
   try {
@@ -44,16 +48,17 @@ async function readInt(dir: string, field: string): Promise<number> {
 }
 
 async function getAcOnline(): Promise<boolean> {
+  const powerSupply = getPowerSupply();
   let entries: string[];
   try {
-    entries = await fs.readdir(POWER_SUPPLY);
+    entries = await fs.readdir(powerSupply);
   } catch {
     return false;
   }
   for (const entry of entries) {
-    const type = await readField(`${POWER_SUPPLY}/${entry}`, 'type');
+    const type = await readField(`${powerSupply}/${entry}`, 'type');
     if (type === 'Mains') {
-      const online = await readField(`${POWER_SUPPLY}/${entry}`, 'online');
+      const online = await readField(`${powerSupply}/${entry}`, 'online');
       if (online === '1') return true;
     }
   }
@@ -61,7 +66,7 @@ async function getAcOnline(): Promise<boolean> {
 }
 
 async function readBattery(name: string): Promise<BatteryInfo | null> {
-  const dir = `${POWER_SUPPLY}/${name}`;
+  const dir = `${getPowerSupply()}/${name}`;
   const type = await readField(dir, 'type');
   if (type !== 'Battery') return null;
 
@@ -138,9 +143,10 @@ async function readBattery(name: string): Promise<BatteryInfo | null> {
 }
 
 async function refresh(): Promise<PowerData> {
+  const powerSupply = getPowerSupply();
   let entries: string[] = [];
   try {
-    entries = await fs.readdir(POWER_SUPPLY);
+    entries = await fs.readdir(powerSupply);
   } catch {
     // no power supply info available
   }
