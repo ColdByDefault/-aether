@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SystemDataProvider } from '@/context/system-data-context'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 import '@xterm/xterm/css/xterm.css'
 
@@ -48,7 +49,11 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased bg-background" suppressHydrationWarning>
         <ThemeProvider>
-          <SystemDataProvider>{children}</SystemDataProvider>
+          <SystemDataProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </SystemDataProvider>
         </ThemeProvider>
       </body>
     </html>

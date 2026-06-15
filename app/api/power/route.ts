@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import { push } from '@/lib/data-bus';
 
 export interface BatteryInfo {
   name: string;
@@ -169,6 +170,7 @@ async function doRefresh(): Promise<void> {
   activeRefresh = (async () => {
     try {
       latest = await refresh();
+      push('power', latest);
     } catch (err) {
       console.error('Power refresh error:', err);
     } finally {

@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { push } from '@/lib/data-bus';
 
 const execAsync = promisify(exec);
 
@@ -68,8 +69,30 @@ async function getDockerEvents(): Promise<SystemEvent[]> {
   }
 }
 
+let latestEvents: SystemEvent[] | null = null;
+let activeRefresh: Promise<void> | null = null;
+
+async function refresh(): Promise<void> {
+  if (activeRefresh) return activeRefresh;
+  activeRefresh = (async () => {
+    try {
+      const events = await getDockerEvents();
+      events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+      latestEvents = events.slice(0, 20);
+      push('events', latestEvents);
+    } catch (err) {
+      console.error('Events refresh error:', err);
+    } finally {
+      activeRefresh = null;
+    }
+  })();
+  return activeRefresh;
+}
+
+refresh();
+setInterval(refresh, 30_000);
+
 export async function GET(): Promise<Response> {
-  const events = await getDockerEvents();
-  events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-  return Response.json(events.slice(0, 20));
+  if (!latestEvents) await refresh();
+  return Response.json(latestEvents ?? []);
 }

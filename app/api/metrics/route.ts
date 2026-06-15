@@ -2,6 +2,7 @@ import os from 'os';
 import fs from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { push } from '@/lib/data-bus';
 
 const execAsync = promisify(exec);
 
@@ -135,6 +136,7 @@ async function refresh(): Promise<void> {
       metricHistory.push({ ts: latest.timestamp, cpu: cpuUsage, mem: memory.usedPercent });
       if (metricHistory.length > HISTORY_MAX) metricHistory.shift();
       latest.history = [...metricHistory];
+      push('metrics', latest);
     } catch (err) {
       console.error('Metrics refresh error:', err);
     } finally {

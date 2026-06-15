@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import http from 'http';
+import { push } from '@/lib/data-bus';
 
 const execAsync = promisify(exec);
 
@@ -250,6 +251,7 @@ async function refresh(): Promise<void> {
         tcpConnections,
         dockerContainers,
       };
+      push('status', latest);
     } catch (err) {
       console.error('Status refresh error:', err);
     } finally {

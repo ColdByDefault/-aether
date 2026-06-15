@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import { push } from '@/lib/data-bus';
 
 export interface ProcessEntry {
   pid: number;
@@ -124,6 +125,7 @@ async function refresh(): Promise<void> {
       prevSnapshot = { totalTicks, procs: procTickMap };
 
       latestProcs = entries;
+      push('processes', latestProcs);
     } catch (err) {
       console.error('Process refresh error:', err);
     } finally {

@@ -3,11 +3,39 @@ import { parse } from 'url';
 import next from 'next';
 import { WebSocketServer } from 'ws';
 import pty from 'node-pty';
+import { EventEmitter } from 'events';
+
+// ── In-process data bus ──────────────────────────────────────────────────────
+// Route modules call push() via lib/data-bus.ts → globalThis.__dataBus.
+// Must be assigned before any route module loads (routes load lazily on first request).
+{
+  const emitter = new EventEmitter();
+  emitter.setMaxListeners(50);
+  const store = new Map();
+  globalThis.__dataBus = {
+    push(type, data) { store.set(type, data); emitter.emit(type, data); },
+    on(type, fn)     { emitter.on(type, fn); },
+    snapshot()       { return Object.fromEntries(store); },
+  };
+}
+
+// ── Silence Next.js per-request logs for /api/* routes ──────────────────────
+{
+  const _write = process.stdout.write.bind(process.stdout);
+  process.stdout.write = (chunk, enc, cb) => {
+    const cb_ = typeof enc === 'function' ? enc : cb;
+    if (/ (GET|POST|PUT|DELETE|PATCH) \/api\/.+ \d{3} in /.test(chunk.toString())) {
+      cb_?.();
+      return true;
+    }
+    return _write(chunk, enc, cb);
+  };
+}
 
 const dev = process.env.NODE_ENV !== 'production';
 const port = parseInt(process.env.PORT ?? '3000', 10);
 
-const app = next({ dev });
+const app = next({ dev, hostname: '0.0.0.0', port });
 const handle = app.getRequestHandler();
 
 await app.prepare();
@@ -19,7 +47,7 @@ const httpServer = createServer(async (req, res) => {
 
 const wss = new WebSocketServer({ noServer: true });
 
-// ── /ws/data — broadcast system metrics to all dashboard clients ──
+// ── /ws/data — broadcast system metrics to all dashboard clients ──────────────
 const datawss = new WebSocketServer({ noServer: true });
 const dataClients = new Set();
 
@@ -37,28 +65,34 @@ function broadcast(type, data) {
   }
 }
 
-async function pollEndpoint(path, type, target) {
+// Subscribe: route modules push to globalThis.__dataBus after each background refresh
+const bus = globalThis.__dataBus;
+for (const type of ['metrics', 'power', 'processes', 'status', 'events']) {
+  bus.on(type, (data) => broadcast(type, data));
+}
+
+// hardware/route.ts is root-owned and cannot call push(); poll it via HTTP instead.
+// Logs from this endpoint are suppressed by the stdout filter above.
+async function pollHardware(target) {
   try {
-    const res = await fetch(`http://localhost:${port}${path}`);
+    const res = await fetch(`http://localhost:${port}/api/hardware`);
     if (!res.ok) return;
     const data = await res.json();
     if (target) {
-      if (target.readyState === 1) target.send(JSON.stringify({ type, data }));
+      if (target.readyState === 1) target.send(JSON.stringify({ type: 'hardware', data }));
     } else {
-      broadcast(type, data);
+      broadcast('hardware', data);
     }
   } catch {}
 }
 
 async function sendInitialData(ws) {
-  await Promise.all([
-    pollEndpoint('/api/metrics',   'metrics',   ws),
-    pollEndpoint('/api/hardware',  'hardware',  ws),
-    pollEndpoint('/api/power',     'power',     ws),
-    pollEndpoint('/api/processes', 'processes', ws),
-    pollEndpoint('/api/status',    'status',    ws),
-    pollEndpoint('/api/events',    'events',    ws),
-  ]);
+  // Send whatever the bus already has (populated by route module refreshes)
+  for (const [type, data] of Object.entries(bus.snapshot())) {
+    if (ws.readyState === 1) ws.send(JSON.stringify({ type, data }));
+  }
+  // hardware is not on the bus — always fetch it directly
+  await pollHardware(ws);
 }
 
 wss.on('connection', (ws) => {
@@ -108,6 +142,8 @@ wss.on('connection', (ws) => {
   });
 });
 
+const nextUpgradeHandler = app.getUpgradeHandler();
+
 httpServer.on('upgrade', (req, socket, head) => {
   const { pathname } = parse(req.url);
   if (pathname === '/ws/terminal') {
@@ -119,17 +155,19 @@ httpServer.on('upgrade', (req, socket, head) => {
       datawss.emit('connection', ws, req);
     });
   } else {
-    socket.destroy();
+    nextUpgradeHandler(req, socket, head);
   }
 });
 
-httpServer.listen(port, () => {
+httpServer.listen(port, '0.0.0.0', () => {
   console.log(`> Ready on http://localhost:${port}`);
 
-  setInterval(() => pollEndpoint('/api/metrics',   'metrics'),   15_000);
-  setInterval(() => pollEndpoint('/api/hardware',  'hardware'),  15_000);
-  setInterval(() => pollEndpoint('/api/power',     'power'),     15_000);
-  setInterval(() => pollEndpoint('/api/processes', 'processes'), 15_000);
-  setInterval(() => pollEndpoint('/api/status',    'status'),    30_000);
-  setInterval(() => pollEndpoint('/api/events',    'events'),    30_000);
+  // Warm up route modules so their background refresh intervals start immediately.
+  // Logs from these initial requests are suppressed by the stdout filter above.
+  for (const path of ['/api/metrics', '/api/power', '/api/processes', '/api/status', '/api/events']) {
+    fetch(`http://localhost:${port}${path}`).catch(() => {});
+  }
+
+  // Only hardware needs a periodic poll (all other types push via the data bus)
+  setInterval(() => pollHardware(), 15_000);
 });
