@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Monitor, Zap, Activity, Bot, Server, Network, ArrowLeftRight, Clock, Globe, Cpu } from 'lucide-react';
+import { Monitor, Zap, Activity, Bot, Server, Container, Network, ArrowLeftRight, Clock, Globe } from 'lucide-react';
 import { SystemMetrics } from '@/components/system-metrics';
 import { PowerMetrics } from '@/components/power-metrics';
 import { EventFeed } from '@/components/event-feed';
 import { AiAnalysis } from '@/components/ai-analysis';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { ProcessTable } from '@/components/process-table';
 import VersionDisplay from "@/components/VersionDisplay";
+import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 
@@ -70,7 +70,6 @@ const NAV = [
   { id: 'power',     label: 'Power',     Icon: Zap      },
   { id: 'events',    label: 'Events',    Icon: Activity },
   { id: 'ai',        label: 'AI',        Icon: Bot      },
-  { id: 'processes', label: 'Processes', Icon: Cpu      },
 ];
 
 function PanelHeader({ icon: Icon, label, right }: {
@@ -117,7 +116,6 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
         <div className="flex items-center justify-between px-4 py-3 lg:px-6">
@@ -128,14 +126,22 @@ export default function Page() {
           </div>
           <nav className="hidden items-center gap-5 font-mono text-xs text-muted-foreground sm:flex">
             {NAV.map(({ id, label, Icon }) => (
-              <Link key={id} href={`#${id}`} className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+              <Link
+                key={id}
+                href={`#${id}`}
+                className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+              >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
               </Link>
             ))}
           </nav>
-          <Link href="http://192.168.2.100:3002/" className="text-muted-foreground transition-colors hover:text-foreground">
-            <span className="sr-only">Dozzle dashboard</span>
+          <Link
+            href="http://192.168.2.100:3002/"
+            className="items-center gap-2 font-mono text-xs text-muted-foreground sm:flex hover:text-foreground"
+          >
+            <Container className="h-3.5 w-3.5" />
+            <span className="">Dozzle dashboard</span>
           </Link>
           <ThemeToggle />
         </div>
@@ -144,46 +150,56 @@ export default function Page() {
       {/* ── Main grid ── */}
       <main className="flex-1 px-4 py-4 lg:px-6 lg:py-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-
           {/* ── ROW 1: Hero (4 cols) ── */}
           <section className="relative overflow-hidden border border-border bg-card md:col-span-2 xl:col-span-4">
             <div
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: "url('/background.png')", opacity: 0.12 }}
+              style={{
+                backgroundImage: "url('/background.png')",
+                opacity: 0.12,
+              }}
             />
             <div className="relative z-10 px-6 py-5 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h1 className="font-mono text-xl font-bold tracking-tight text-foreground md:text-2xl">
-                  aether <span className="text-muted-foreground font-normal">— system monitoring daemon</span>
-                </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
-                  <span className="inline-flex items-center gap-1.5 border border-border bg-muted/40 px-2 py-1 text-muted-foreground">
-                    <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-green-500'}`} />
-                    {error ? 'offline' : 'online'}
+                  aether{" "}
+                  <span className="text-muted-foreground font-normal">
+                    — system monitoring daemon
                   </span>
+                </h1>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="gap-1.5 font-mono text-xs font-normal text-muted-foreground bg-muted/40 h-auto py-1 rounded-sm">
+                    <span className={`term-dot h-1.5 w-1.5 ${error ? "bg-destructive" : "bg-green-500"}`} />
+                    {error ? "offline" : "online"}
+                  </Badge>
                   {data?.ip && (
-                    <span className="inline-flex items-center gap-1.5 border border-border bg-muted/40 px-2 py-1 text-muted-foreground">
+                    <Badge variant="outline" className="gap-1.5 font-mono text-xs font-normal text-muted-foreground bg-muted/40 h-auto py-1 rounded-sm">
                       <Globe className="h-3 w-3" />
                       {data.ip}
-                    </span>
+                    </Badge>
                   )}
-                  <span className="inline-flex items-center gap-1.5 border border-border bg-muted/40 px-2 py-1 text-muted-foreground">
+                  <Badge variant="outline" className="gap-1.5 font-mono text-xs font-normal text-muted-foreground bg-muted/40 h-auto py-1 rounded-sm">
                     <Clock className="h-3 w-3" />
-                    {time || '—'}
-                  </span>
+                    {time || "—"}
+                  </Badge>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* ── ROW 2 ── */}
+          {/* ── ROW 2: Hardware + Infrastructure ── */}
 
-          {/* System Metrics (2 cols) */}
-          <div className="md:col-span-2 xl:col-span-2">
+          {/* System Metrics (xl: 2 cols) */}
+          <div className="md:col-span-2 xl:col-span-2 h-175 flex flex-col">
             <SystemMetrics />
           </div>
 
-          {/* Service Probe (1 col) */}
+          {/* Power Metrics (xl: 1 col) */}
+          <div className="xl:col-span-1">
+            <PowerMetrics />
+          </div>
+
+          {/* Service Probe (xl: 1 col) */}
           <div className="xl:col-span-1">
             <div className="panel flex h-full flex-col">
               <PanelHeader
@@ -193,68 +209,139 @@ export default function Page() {
               />
               <div className="flex-1 divide-y divide-border overflow-auto">
                 {!data && !error && (
-                  <div className="px-4 py-3 font-mono text-sm text-muted-foreground">probing...</div>
+                  <div className="px-4 py-3 font-mono text-sm text-muted-foreground">
+                    probing...
+                  </div>
                 )}
                 {error && (
-                  <div className="px-4 py-3 font-mono text-sm text-destructive">ERR: {error}</div>
+                  <div className="px-4 py-3 font-mono text-sm text-destructive">
+                    ERR: {error}
+                  </div>
                 )}
                 {data?.services?.map((service) => (
                   <div key={service.name}>
                     <div className="flex items-center justify-between px-4 py-3 font-mono text-sm">
                       <div className="flex items-center gap-3">
-                        <span className={`term-dot h-2 w-2 ${service.running ? 'bg-primary' : 'bg-destructive'}`} />
-                        <span className="text-foreground">{service.name.toLowerCase().replace(/\s+/g, '-')}</span>
+                        <span
+                          className={`term-dot h-2 w-2 ${service.running ? "bg-primary" : "bg-destructive"}`}
+                        />
+                        <span className="text-foreground">
+                          {service.name.toLowerCase().replace(/\s+/g, "-")}
+                        </span>
                       </div>
-                      <span className={service.running ? 'accent-text' : 'text-destructive'}>
-                        {service.running ? 'up' : 'down'}
+                      <span
+                        className={
+                          service.running ? "accent-text" : "text-destructive"
+                        }
+                      >
+                        {service.running ? "up" : "down"}
                       </span>
                     </div>
-                    {service.name === 'Docker' && service.running && (data?.dockerContainers?.length ?? 0) > 0 && (
-                      <div className="border-t border-border/50 bg-muted/20">
-                        {data!.dockerContainers.map((c, i) => {
-                          const isLast = i === data!.dockerContainers.length - 1;
-                          const hostPorts = c.ports
-                            ? [...c.ports.matchAll(/(?:0\.0\.0\.0|::):(\d+)->/g)].map((m) => ':' + m[1]).join(' ')
-                            : '';
-                          const running = c.status.toLowerCase().startsWith('up');
-                          return (
-                            <div key={c.id} className="flex items-center gap-3 py-2 pl-10 pr-4 font-mono text-xs text-muted-foreground">
-                              <span className="shrink-0 text-muted-foreground/40">{isLast ? '└─' : '├─'}</span>
-                              <span className={`term-dot h-1.5 w-1.5 shrink-0 ${running ? 'bg-primary' : 'bg-muted-foreground/50'}`} />
-                              <span className="min-w-0 flex-1 truncate text-foreground/80">{c.name}</span>
-                              {hostPorts && <span className="shrink-0 text-muted-foreground/60">{hostPorts}</span>}
-                              <span className={`shrink-0 ${running ? 'accent-text' : 'text-muted-foreground/50'}`}>
-                                {c.status.replace(/^Up\s+/i, '').split(' ').slice(0, 2).join(' ')}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {service.name === "Docker" &&
+                      service.running &&
+                      (data?.dockerContainers?.length ?? 0) > 0 && (
+                        <div className="border-t border-border/50 bg-muted/20">
+                          {data!.dockerContainers.map((c, i) => {
+                            const isLast =
+                              i === data!.dockerContainers.length - 1;
+                            const hostPorts = c.ports
+                              ? [
+                                  ...c.ports.matchAll(
+                                    /(?:0\.0\.0\.0|::):(\d+)->/g,
+                                  ),
+                                ]
+                                  .map((m) => ":" + m[1])
+                                  .join(" ")
+                              : "";
+                            const running = c.status
+                              .toLowerCase()
+                              .startsWith("up");
+                            return (
+                              <div
+                                key={c.id}
+                                className="flex items-center gap-3 py-2 pl-10 pr-4 font-mono text-xs text-muted-foreground"
+                              >
+                                <span className="shrink-0 text-muted-foreground/40">
+                                  {isLast ? "└─" : "├─"}
+                                </span>
+                                <span
+                                  className={`term-dot h-1.5 w-1.5 shrink-0 ${running ? "bg-primary" : "bg-muted-foreground/50"}`}
+                                />
+                                <span className="min-w-0 flex-1 truncate text-foreground/80">
+                                  {c.name}
+                                </span>
+                                {hostPorts && (
+                                  <span className="shrink-0 text-muted-foreground/60">
+                                    {hostPorts}
+                                  </span>
+                                )}
+                                <span
+                                  className={`shrink-0 ${running ? "accent-text" : "text-muted-foreground/50"}`}
+                                >
+                                  {c.status
+                                    .replace(/^Up\s+/i, "")
+                                    .split(" ")
+                                    .slice(0, 2)
+                                    .join(" ")}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                   </div>
                 ))}
               </div>
               <div className="border-t border-border px-4 py-2 font-mono text-xs text-muted-foreground/60">
-                sync {data ? new Date(data.timestamp).toISOString().slice(11, 19) + 'Z' : '—'}
+                sync{" "}
+                {data
+                  ? new Date(data.timestamp).toISOString().slice(11, 19) + "Z"
+                  : "—"}
               </div>
             </div>
           </div>
 
-          {/* Col 4: Power + Network stacked, spans rows 2–3 at xl */}
-          <div className="xl:col-span-1 xl:row-span-2 flex flex-col gap-4">
-            <PowerMetrics />
+          {/* ── ROW 3: Activity + Network ── */}
+
+          {/* Events (xl: 2 cols) */}
+          <div className="md:col-span-2 xl:col-span-2">
+            <EventFeed />
+          </div>
+
+          {/* AI Analysis (xl: 1 col) */}
+          <div className="md:col-span-2 xl:col-span-1">
+            <AiAnalysis />
+          </div>
+
+          {/* Network / Cron stacked (xl: 1 col) */}
+          <div className="md:col-span-2 xl:col-span-1 flex flex-col gap-4">
 
             {/* Open Ports */}
             {(data?.openPorts?.length ?? 0) > 0 && (
               <div className="panel">
-                <PanelHeader icon={Network} label="Open Ports" right={`${data!.openPorts.length} listening`} />
+                <PanelHeader
+                  icon={Network}
+                  label="Open Ports"
+                  right={`${data!.openPorts.length} listening`}
+                />
                 <div className="divide-y divide-border">
                   {data!.openPorts.map((p) => (
-                    <div key={`${p.protocol}-${p.port}-${p.address}`} className="flex items-center gap-3 px-4 py-2 font-mono text-xs">
-                      <span className="w-8 shrink-0 uppercase text-muted-foreground/60">{p.protocol}</span>
-                      <span className="w-12 shrink-0 text-right font-semibold text-foreground">{p.port}</span>
-                      <span className="min-w-0 flex-1 truncate text-muted-foreground/70">{p.address}</span>
-                      <span className="shrink-0 text-muted-foreground/50">{p.process}</span>
+                    <div
+                      key={`${p.protocol}-${p.port}-${p.address}`}
+                      className="flex items-center gap-3 px-4 py-2 font-mono text-xs"
+                    >
+                      <span className="w-8 shrink-0 uppercase text-muted-foreground/60">
+                        {p.protocol}
+                      </span>
+                      <span className="w-12 shrink-0 text-right font-semibold text-foreground">
+                        {p.port}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground/70">
+                        {p.address}
+                      </span>
+                      <span className="shrink-0 text-muted-foreground/50">
+                        {p.process}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -264,14 +351,29 @@ export default function Page() {
             {/* TCP Connections */}
             {(data?.tcpConnections?.length ?? 0) > 0 && (
               <div className="panel">
-                <PanelHeader icon={ArrowLeftRight} label="TCP" right={`${data!.tcpConnections.length} established`} />
+                <PanelHeader
+                  icon={ArrowLeftRight}
+                  label="TCP"
+                  right={`${data!.tcpConnections.length} established`}
+                />
                 <div className="divide-y divide-border">
                   {data!.tcpConnections.map((c, i) => (
-                    <div key={i} className="flex items-center gap-2 px-4 py-2 font-mono text-xs">
-                      <span className="min-w-0 flex-1 truncate text-foreground/80">{c.local}</span>
-                      <span className="shrink-0 text-muted-foreground/40">→</span>
-                      <span className="min-w-0 flex-1 truncate text-muted-foreground/70">{c.remote}</span>
-                      <span className="shrink-0 text-muted-foreground/50">{c.process}</span>
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 px-4 py-2 font-mono text-xs"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-foreground/80">
+                        {c.local}
+                      </span>
+                      <span className="shrink-0 text-muted-foreground/40">
+                        →
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground/70">
+                        {c.remote}
+                      </span>
+                      <span className="shrink-0 text-muted-foreground/50">
+                        {c.process}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -284,24 +386,43 @@ export default function Page() {
                 <PanelHeader
                   icon={Clock}
                   label="Hermes Cron"
-                  right={`${data!.cronJobs.filter(j => j.enabled).length}/${data!.cronJobs.length} active`}
+                  right={`${data!.cronJobs.filter((j) => j.enabled).length}/${data!.cronJobs.length} active`}
                 />
                 <div className="divide-y divide-border">
                   {data!.cronJobs.map((job) => {
-                    const failed = job.enabled && job.state === 'failed';
+                    const failed = job.enabled && job.state === "failed";
                     const ok = job.enabled && !failed;
                     const nextLabel = job.nextRun
-                      ? new Date(job.nextRun).toISOString().slice(5, 16).replace('T', ' ')
+                      ? new Date(job.nextRun)
+                          .toISOString()
+                          .slice(5, 16)
+                          .replace("T", " ")
                       : null;
-                    const statusLabel = !job.enabled ? 'disabled' : failed ? 'err' : job.state;
+                    const statusLabel = !job.enabled
+                      ? "disabled"
+                      : failed
+                        ? "err"
+                        : job.state;
                     return (
                       <div key={job.id} className="px-4 py-3 font-mono text-sm">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <span className={`term-dot h-2 w-2 shrink-0 ${ok ? 'bg-primary' : failed ? 'bg-destructive' : 'bg-muted-foreground/40'}`} />
-                            <span className="text-foreground">{job.name.toLowerCase().replace(/\s+/g, '-')}</span>
+                            <span
+                              className={`term-dot h-2 w-2 shrink-0 ${ok ? "bg-primary" : failed ? "bg-destructive" : "bg-muted-foreground/40"}`}
+                            />
+                            <span className="text-foreground">
+                              {job.name.toLowerCase().replace(/\s+/g, "-")}
+                            </span>
                           </div>
-                          <span className={ok ? 'accent-text' : failed ? 'text-destructive' : 'text-muted-foreground/50'}>
+                          <span
+                            className={
+                              ok
+                                ? "accent-text"
+                                : failed
+                                  ? "text-destructive"
+                                  : "text-muted-foreground/50"
+                            }
+                          >
                             {statusLabel}
                           </span>
                         </div>
@@ -310,8 +431,14 @@ export default function Page() {
                           {nextLabel && <span>next {nextLabel}</span>}
                           {job.lastStatus && (
                             <span>
-                              last{' '}
-                              <span className={job.lastStatus === 'success' ? 'accent-text' : 'text-destructive'}>
+                              last{" "}
+                              <span
+                                className={
+                                  job.lastStatus === "success"
+                                    ? "accent-text"
+                                    : "text-destructive"
+                                }
+                              >
                                 {job.lastStatus}
                               </span>
                             </span>
@@ -319,12 +446,19 @@ export default function Page() {
                         </div>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 pl-5 text-xs text-muted-foreground/45">
                           {job.noAgent && (
-                            <span className="border border-muted-foreground/25 px-1 text-muted-foreground/50">no-agent</span>
+                            <span className="border border-muted-foreground/25 px-1 text-muted-foreground/50">
+                              no-agent
+                            </span>
                           )}
                           {job.script && <span>script: {job.script}</span>}
                           {job.model && (
-                            <span className={job.noAgent ? 'line-through opacity-40' : ''}>
-                              model: {job.model}{job.provider ? ` (${job.provider})` : ''}
+                            <span
+                              className={
+                                job.noAgent ? "line-through opacity-40" : ""
+                              }
+                            >
+                              model: {job.model}
+                              {job.provider ? ` (${job.provider})` : ""}
                             </span>
                           )}
                         </div>
@@ -341,36 +475,20 @@ export default function Page() {
             )}
           </div>
 
-          {/* ── ROW 3 ── */}
-
-          {/* Events (2 cols) */}
-          <div className="md:col-span-2 xl:col-span-2">
-            <EventFeed />
-          </div>
-
-          {/* AI Analysis (1 col) */}
-          <div className="md:col-span-2 xl:col-span-1">
-            <AiAnalysis />
-          </div>
-
-          {/* ── ROW 4: Process Table (full width) ── */}
-          <div className="md:col-span-2 xl:col-span-4">
-            <ProcessTable />
-          </div>
-
         </div>
-
       </main>
 
       {/* ── Footer — sibling of main so flex-col pushes it to the bottom ── */}
       <footer className="border-t border-border px-4 py-4 lg:px-6">
         <div className="flex flex-col gap-1 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>aether-daemon</span>
-                    <VersionDisplay
+          <VersionDisplay
             className="text-xs text-muted-foreground"
             titleLabel="Daemon version"
           />
-          <span className="text-muted-foreground/50">{data ? `host ${data.ip}` : 'host —'} · {time || '—'}</span>
+          <span className="text-muted-foreground/50">
+            {data ? `host ${data.ip}` : "host —"} · {time || "—"}
+          </span>
         </div>
       </footer>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Bot } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface AnalysisResult {
   analysis: string;
@@ -58,13 +59,15 @@ export function AiAnalysis() {
             {loading ? 'querying model...' : result ? 'analysis ready' : 'idle'}
           </span>
           <span className="flex-1" />
-          <button
+          <Button
+            variant="link"
+            size="xs"
             onClick={analyze}
             disabled={loading}
-            className="font-mono text-xs accent-text disabled:opacity-40 hover:underline disabled:no-underline"
+            className="font-mono h-auto px-0 text-primary"
           >
             {loading ? '...' : 'Analyze System ▶'}
-          </button>
+          </Button>
         </div>
 
         {error && (

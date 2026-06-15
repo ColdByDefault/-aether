@@ -200,8 +200,8 @@ export function SystemMetrics() {
   }, []);
 
   return (
-    <section id="system" className="scroll-mt-20">
-      <div className="mb-3 flex items-center gap-2 font-mono text-xs text-muted-foreground">
+    <section id="system" className="scroll-mt-20 h-full flex flex-col">
+      <div className="mb-3 flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">
         <Monitor className="h-3.5 w-3.5 text-primary" />
         <span className="uppercase tracking-wider">System Overview</span>
         <span className="flex-1 border-t border-border" />
@@ -211,7 +211,7 @@ export function SystemMetrics() {
         </span>
       </div>
 
-      <div className="panel">
+      <div className="panel flex-1 min-h-0 overflow-hidden">
         {error && (
           <div className="border-b border-border px-4 py-2.5 font-mono text-sm text-destructive">
             ERR: {error}
@@ -231,16 +231,18 @@ export function SystemMetrics() {
                   percent={data.cpu.usedPercent}
                   detail={`${data.cpu.cores} cores · load ${data.cpu.loadAvg.map((n) => n.toFixed(2)).join(' ')}`}
                 />
-                {(data.history?.length ?? 0) > 1 && (
-                  <div>
-                    <Sparkline
-                      data={data.history!.map((h) => h.cpu)}
-                      pct={data.cpu.usedPercent}
-                      height={28}
-                    />
-                    <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
-                  </div>
-                )}
+                <div className="h-10">
+                  {(data.history?.length ?? 0) > 1 && (
+                    <>
+                      <Sparkline
+                        data={data.history!.map((h) => h.cpu)}
+                        pct={data.cpu.usedPercent}
+                        height={28}
+                      />
+                      <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
+                    </>
+                  )}
+                </div>
                 <p className="truncate font-mono text-xs text-muted-foreground/70" title={data.cpu.model}>
                   {data.cpu.model}
                 </p>
@@ -265,16 +267,18 @@ export function SystemMetrics() {
                   percent={data.memory.usedPercent}
                   detail={`${formatBytes(data.memory.used)} / ${formatBytes(data.memory.total)} · ${formatBytes(data.memory.free)} free`}
                 />
-                {(data.history?.length ?? 0) > 1 && (
-                  <div>
-                    <Sparkline
-                      data={data.history!.map((h) => h.mem)}
-                      pct={data.memory.usedPercent}
-                      height={28}
-                    />
-                    <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
-                  </div>
-                )}
+                <div className="h-10">
+                  {(data.history?.length ?? 0) > 1 && (
+                    <>
+                      <Sparkline
+                        data={data.history!.map((h) => h.mem)}
+                        pct={data.memory.usedPercent}
+                        height={28}
+                      />
+                      <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
+                    </>
+                  )}
+                </div>
                 {procs.length > 0 && (
                   <ProcessList procs={procs} sortBy="mem" label="top by memory" />
                 )}

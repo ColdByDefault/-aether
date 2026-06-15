@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Cpu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ProcessEntry {
   pid: number;
@@ -64,21 +65,25 @@ export function ProcessTable() {
         <Cpu className="h-3.5 w-3.5 text-primary" />
         <span className="uppercase tracking-wider">Processes</span>
         <span className="flex-1 border-t border-border" />
-        <span className="inline-flex items-center gap-1 text-muted-foreground/60">
+        <span className="inline-flex items-center gap-0.5 text-muted-foreground/60">
           sort
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
             onClick={() => setSort('cpu')}
-            className={`ml-1 px-1 py-0.5 transition-colors ${sort === 'cpu' ? 'text-primary' : 'hover:text-foreground'}`}
+            className={`font-mono ${sort === 'cpu' ? 'text-primary' : 'text-muted-foreground/60'}`}
           >
             cpu
-          </button>
+          </Button>
           /
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
             onClick={() => setSort('mem')}
-            className={`px-1 py-0.5 transition-colors ${sort === 'mem' ? 'text-primary' : 'hover:text-foreground'}`}
+            className={`font-mono ${sort === 'mem' ? 'text-primary' : 'text-muted-foreground/60'}`}
           >
             mem
-          </button>
+          </Button>
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
