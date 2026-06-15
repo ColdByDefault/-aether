@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Monitor, Zap, Activity, Bot, Server, Network, ArrowLeftRight, Clock, Globe } from 'lucide-react';
+import { Monitor, Zap, Activity, Bot, Server, Network, ArrowLeftRight, Clock, Globe, Cpu } from 'lucide-react';
 import { SystemMetrics } from '@/components/system-metrics';
 import { PowerMetrics } from '@/components/power-metrics';
 import { EventFeed } from '@/components/event-feed';
 import { AiAnalysis } from '@/components/ai-analysis';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { ProcessTable } from '@/components/process-table';
 import VersionDisplay from "@/components/VersionDisplay";
+import Link from 'next/link';
 
 
 interface ServiceStatus {
@@ -64,10 +66,11 @@ interface DashboardData {
 }
 
 const NAV = [
-  { id: 'system', label: 'System', Icon: Monitor  },
-  { id: 'power',  label: 'Power',  Icon: Zap      },
-  { id: 'events', label: 'Events', Icon: Activity },
-  { id: 'ai',     label: 'AI',     Icon: Bot      },
+  { id: 'system',    label: 'System',    Icon: Monitor  },
+  { id: 'power',     label: 'Power',     Icon: Zap      },
+  { id: 'events',    label: 'Events',    Icon: Activity },
+  { id: 'ai',        label: 'AI',        Icon: Bot      },
+  { id: 'processes', label: 'Processes', Icon: Cpu      },
 ];
 
 function PanelHeader({ icon: Icon, label, right }: {
@@ -125,12 +128,15 @@ export default function Page() {
           </div>
           <nav className="hidden items-center gap-5 font-mono text-xs text-muted-foreground sm:flex">
             {NAV.map(({ id, label, Icon }) => (
-              <a key={id} href={`#${id}`} className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+              <Link key={id} href={`#${id}`} className="flex items-center gap-1.5 transition-colors hover:text-foreground">
                 <Icon className="h-3.5 w-3.5" />
                 {label}
-              </a>
+              </Link>
             ))}
           </nav>
+          <Link href="http://192.168.2.100:3002/" className="text-muted-foreground transition-colors hover:text-foreground">
+            <span className="sr-only">Dozzle dashboard</span>
+          </Link>
           <ThemeToggle />
         </div>
       </header>
@@ -345,6 +351,11 @@ export default function Page() {
           {/* AI Analysis (1 col) */}
           <div className="md:col-span-2 xl:col-span-1">
             <AiAnalysis />
+          </div>
+
+          {/* ── ROW 4: Process Table (full width) ── */}
+          <div className="md:col-span-2 xl:col-span-4">
+            <ProcessTable />
           </div>
 
         </div>

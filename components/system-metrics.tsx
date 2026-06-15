@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Monitor, Cpu, MemoryStick, HardDrive, Server } from 'lucide-react';
+import { Sparkline } from '@/components/sparkline';
 
 interface DiskInfo {
   total: number;
@@ -9,6 +10,12 @@ interface DiskInfo {
   available: number;
   usedPercent: number;
   mount: string;
+}
+
+interface HistoryPoint {
+  ts: string;
+  cpu: number;
+  mem: number;
 }
 
 interface MetricsData {
@@ -29,6 +36,7 @@ interface MetricsData {
   hostname: string;
   platform: string;
   timestamp: string;
+  history?: HistoryPoint[];
 }
 
 interface ProcessEntry {
@@ -223,6 +231,16 @@ export function SystemMetrics() {
                   percent={data.cpu.usedPercent}
                   detail={`${data.cpu.cores} cores · load ${data.cpu.loadAvg.map((n) => n.toFixed(2)).join(' ')}`}
                 />
+                {(data.history?.length ?? 0) > 1 && (
+                  <div>
+                    <Sparkline
+                      data={data.history!.map((h) => h.cpu)}
+                      pct={data.cpu.usedPercent}
+                      height={28}
+                    />
+                    <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
+                  </div>
+                )}
                 <p className="truncate font-mono text-xs text-muted-foreground/70" title={data.cpu.model}>
                   {data.cpu.model}
                 </p>
@@ -247,6 +265,16 @@ export function SystemMetrics() {
                   percent={data.memory.usedPercent}
                   detail={`${formatBytes(data.memory.used)} / ${formatBytes(data.memory.total)} · ${formatBytes(data.memory.free)} free`}
                 />
+                {(data.history?.length ?? 0) > 1 && (
+                  <div>
+                    <Sparkline
+                      data={data.history!.map((h) => h.mem)}
+                      pct={data.memory.usedPercent}
+                      height={28}
+                    />
+                    <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
+                  </div>
+                )}
                 {procs.length > 0 && (
                   <ProcessList procs={procs} sortBy="mem" label="top by memory" />
                 )}

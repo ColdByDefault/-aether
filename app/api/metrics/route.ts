@@ -13,6 +13,12 @@ interface DiskInfo {
   mount: string;
 }
 
+interface HistoryPoint {
+  ts: string;
+  cpu: number;
+  mem: number;
+}
+
 interface MetricsResponse {
   cpu: {
     usedPercent: number;
@@ -31,6 +37,7 @@ interface MetricsResponse {
   hostname: string;
   platform: string;
   timestamp: string;
+  history: HistoryPoint[];
 }
 
 async function getMemory(): Promise<{ total: number; used: number; free: number; usedPercent: number }> {
@@ -99,6 +106,9 @@ async function getDiskInfo(): Promise<DiskInfo[]> {
 }
 
 // Background refresh — computes once every 15s, requests always read from memory.
+const HISTORY_MAX = 20; // 20 × 15s ≈ 5 min
+const metricHistory: HistoryPoint[] = [];
+
 let latest: MetricsResponse | null = null;
 let activeRefresh: Promise<void> | null = null;
 
@@ -120,7 +130,11 @@ async function refresh(): Promise<void> {
         hostname: process.env.SERVER_HOSTNAME || os.hostname(),
         platform: `${os.type()} ${os.release()}`,
         timestamp: new Date().toISOString(),
+        history: [],
       };
+      metricHistory.push({ ts: latest.timestamp, cpu: cpuUsage, mem: memory.usedPercent });
+      if (metricHistory.length > HISTORY_MAX) metricHistory.shift();
+      latest.history = [...metricHistory];
     } catch (err) {
       console.error('Metrics refresh error:', err);
     } finally {
