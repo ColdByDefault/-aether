@@ -429,12 +429,8 @@ export default function Page() {
                             >
                               {statusLabel}
                             </span>
-                            {!job.noAgent && (
-                              <HermesTriggerButton jobId={job.id} />
-                            )}
-                            {!job.noAgent && (
-                              <AptReportDialog jobName={job.name} />
-                            )}
+                            <HermesTriggerButton jobId={job.id} />
+                            <AptReportDialog jobName={job.name} />
                           </div>
                         </div>
                         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 pl-5 text-xs text-muted-foreground/60">
