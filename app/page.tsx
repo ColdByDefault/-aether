@@ -16,6 +16,7 @@ import { ServiceProbe } from '@/components/service-probe';
 import { OpenPorts } from '@/components/open-ports';
 import { TcpConnections } from '@/components/tcp-connections';
 import { HermesCron } from '@/components/hermes-cron';
+import { ApiHealthCard } from '@/components/api-health-card';
 import Link from 'next/link';
 
 const NAV = [
@@ -111,7 +112,12 @@ export default function Page() {
             <SwapUsage />
           </div>
 
-          {/* ROW 4: Events + AI + Network/Cron stack */}
+          {/* ROW 4: API Health */}
+          <div className="md:col-span-2 xl:col-span-2">
+            <ApiHealthCard />
+          </div>
+
+          {/* ROW 5: Events + AI + Network/Cron stack */}
           <div className="md:col-span-2 xl:col-span-2">
             <EventFeed />
           </div>
