@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Monitor, Zap, Activity, Bot, Server, Container, Network, ArrowLeftRight, Clock, Globe, TerminalSquare } from 'lucide-react';
+import { useSystemDataContext } from '@/context/system-data-context';
 import { SystemMetrics } from '@/components/system-metrics';
 import { PowerMetrics } from '@/components/power-metrics';
 import { EventFeed } from '@/components/event-feed';
@@ -16,58 +17,6 @@ import { SwapUsage } from '@/components/swap-usage';
 import Link from 'next/link';
 
 
-interface ServiceStatus {
-  name: string;
-  running: boolean;
-  error?: string;
-}
-
-interface CronJob {
-  id: string;
-  name: string;
-  enabled: boolean;
-  state: string;
-  schedule: string;
-  nextRun: string | null;
-  lastRunAt: string | null;
-  lastStatus: string | null;
-  lastError: string | null;
-  model: string | null;
-  provider: string | null;
-  script: string | null;
-  noAgent: boolean;
-}
-
-interface OpenPort {
-  protocol: string;
-  port: number;
-  address: string;
-  process: string;
-}
-
-interface TcpConnection {
-  local: string;
-  remote: string;
-  process: string;
-}
-
-interface DockerContainer {
-  id: string;
-  name: string;
-  image: string;
-  status: string;
-  ports: string;
-}
-
-interface DashboardData {
-  ip: string;
-  timestamp: string;
-  services: ServiceStatus[];
-  cronJobs: CronJob[];
-  openPorts: OpenPort[];
-  tcpConnections: TcpConnection[];
-  dockerContainers: DockerContainer[];
-}
 
 const NAV = [
   { id: 'system',    label: 'System',    Icon: Monitor        },
@@ -93,30 +42,16 @@ function PanelHeader({ icon: Icon, label, right }: {
 }
 
 export default function Page() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const { status: data, connected } = useSystemDataContext();
   const [time, setTime] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchStatus = async () => {
-    try {
-      const response = await fetch('/api/status');
-      if (!response.ok) throw new Error('Failed to fetch status');
-      setData(await response.json());
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
 
   useEffect(() => {
-    fetchStatus();
     setTime(new Date().toISOString().replace('T', ' ').slice(0, 19) + 'Z');
-    const si = setInterval(fetchStatus, 30_000);
     const ti = setInterval(
       () => setTime(new Date().toISOString().replace('T', ' ').slice(0, 19) + 'Z'),
       1000,
     );
-    return () => { clearInterval(si); clearInterval(ti); };
+    return () => clearInterval(ti);
   }, []);
 
   return (
@@ -174,8 +109,8 @@ export default function Page() {
                 </h1>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="gap-1.5 font-mono text-xs font-normal text-muted-foreground bg-muted/40 h-auto py-1 rounded-sm">
-                    <span className={`term-dot h-1.5 w-1.5 ${error ? "bg-destructive" : "bg-green-500"}`} />
-                    {error ? "offline" : "online"}
+                    <span className={`term-dot h-1.5 w-1.5 ${connected ? "bg-green-500" : "bg-destructive"}`} />
+                    {connected ? "online" : "offline"}
                   </Badge>
                   {data?.ip && (
                     <Badge variant="outline" className="gap-1.5 font-mono text-xs font-normal text-muted-foreground bg-muted/40 h-auto py-1 rounded-sm">
@@ -213,14 +148,9 @@ export default function Page() {
                 right={data?.ip ? `ip ${data.ip}` : undefined}
               />
               <div className="flex-1 divide-y divide-border overflow-auto">
-                {!data && !error && (
+                {!data && (
                   <div className="px-4 py-3 font-mono text-sm text-muted-foreground">
-                    probing...
-                  </div>
-                )}
-                {error && (
-                  <div className="px-4 py-3 font-mono text-sm text-destructive">
-                    ERR: {error}
+                    {connected ? 'probing...' : 'connecting...'}
                   </div>
                 )}
                 {data?.services?.map((service) => (

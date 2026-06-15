@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
 import type { SystemEvent } from '@/app/api/events/route';
+import { useSystemDataContext } from '@/context/system-data-context';
 
 function severityDot(severity: SystemEvent['severity']): string {
   if (severity === 'error') return 'bg-destructive';
@@ -15,36 +15,9 @@ function formatTime(iso: string): string {
 }
 
 export function EventFeed() {
-  const [events, setEvents] = useState<SystemEvent[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-
-    const fetchEvents = async () => {
-      try {
-        const res = await fetch('/api/events');
-        if (!res.ok) throw new Error('Failed to fetch events');
-        const data: SystemEvent[] = await res.json();
-        if (!active) return;
-        setEvents(data);
-        setError(null);
-        setLoading(false);
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
-    const interval = setInterval(fetchEvents, 30_000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
+  const { events, connected } = useSystemDataContext();
+  const loading = events.length === 0 && !connected;
+  const error = !connected && events.length === 0 ? 'connecting...' : null;
 
   return (
     <section id="events" className="scroll-mt-20">
@@ -54,7 +27,7 @@ export function EventFeed() {
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
           <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
-          {error ? 'error' : loading ? 'polling' : 'live · 30s'}
+          {!connected ? 'reconnecting...' : loading ? 'connecting...' : 'live · ws'}
         </span>
       </div>
 

@@ -1,19 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Thermometer } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-
-interface ThermalZone {
-  zone: string;
-  type: string;
-  celsius: number;
-}
-
-interface HardwareData {
-  cpuTemps: ThermalZone[];
-  timestamp: string;
-}
+import { useSystemDataContext } from '@/context/system-data-context';
 
 const TEMP_MAX = 100;
 
@@ -30,36 +19,9 @@ function tempBarClass(celsius: number): string {
 }
 
 export function CpuTemp() {
-  const [data, setData] = useState<HardwareData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/hardware');
-        if (!res.ok) throw new Error('Failed to fetch hardware data');
-        const json = await res.json();
-        if (!active) return;
-        setData(json);
-        setError(null);
-        setLoading(false);
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 15_000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
+  const { hardware: data, connected } = useSystemDataContext();
+  const loading = data === null;
+  const error = !connected && loading ? 'connecting...' : null;
 
   const zones = data?.cpuTemps ?? [];
 
@@ -71,7 +33,7 @@ export function CpuTemp() {
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
           <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
-          {error ? 'error' : loading ? 'polling' : 'live · 15s'}
+          {!connected ? 'reconnecting...' : loading ? 'connecting...' : 'live · ws'}
         </span>
       </div>
 

@@ -1,52 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Monitor, Cpu, MemoryStick, HardDrive, Server } from 'lucide-react';
 import { Sparkline } from '@/components/sparkline';
+import { useSystemDataContext } from '@/context/system-data-context';
 
-interface DiskInfo {
-  total: number;
-  used: number;
-  available: number;
-  usedPercent: number;
-  mount: string;
-}
-
-interface HistoryPoint {
-  ts: string;
-  cpu: number;
-  mem: number;
-}
-
-interface MetricsData {
-  cpu: {
-    usedPercent: number;
-    cores: number;
-    model: string;
-    loadAvg: number[];
-  };
-  memory: {
-    total: number;
-    used: number;
-    free: number;
-    usedPercent: number;
-  };
-  disk: DiskInfo[];
-  uptime: number;
-  hostname: string;
-  platform: string;
-  timestamp: string;
-  history?: HistoryPoint[];
-}
-
-interface ProcessEntry {
-  pid: number;
-  name: string;
-  cmdline: string;
-  cpuPercent: number;
-  memRss: number;
-  memPercent: number;
-}
+import type { MetricsData, ProcessEntry } from '@/hooks/use-system-data';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -159,45 +117,9 @@ function ProcessList({
 }
 
 export function SystemMetrics() {
-  const [data, setData] = useState<MetricsData | null>(null);
-  const [procs, setProcs] = useState<ProcessEntry[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-
-    const fetchAll = async () => {
-      try {
-        const [metricsRes, procsRes] = await Promise.all([
-          fetch('/api/metrics'),
-          fetch('/api/processes'),
-        ]);
-        if (!metricsRes.ok) throw new Error('Failed to fetch metrics');
-        const [metrics, processes] = await Promise.all([
-          metricsRes.json(),
-          procsRes.ok ? procsRes.json() : Promise.resolve([]),
-        ]);
-        if (!active) return;
-        setData(metrics);
-        if (Array.isArray(processes)) setProcs(processes);
-        setError(null);
-        setLoading(false);
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setLoading(false);
-      }
-    };
-
-    fetchAll();
-    const interval = setInterval(fetchAll, 15_000);
-
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
+  const { metrics: data, processes: procs, connected } = useSystemDataContext();
+  const loading = data === null;
+  const error = !connected && loading ? 'connecting...' : null;
 
   return (
     <section id="system" className="scroll-mt-20 h-full flex flex-col">
@@ -207,7 +129,7 @@ export function SystemMetrics() {
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
           <span className={`term-dot ${error ? 'bg-destructive' : 'bg-primary'} h-1.5 w-1.5`} />
-          {error ? 'error' : loading ? 'polling' : 'live · 15s'}
+          {!connected ? 'reconnecting...' : loading ? 'connecting...' : 'live · ws'}
         </span>
       </div>
 

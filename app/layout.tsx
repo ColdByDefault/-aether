@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
+import { SystemDataProvider } from '@/context/system-data-context'
 import './globals.css'
 import '@xterm/xterm/css/xterm.css'
 
@@ -46,7 +47,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="font-sans antialiased bg-background" suppressHydrationWarning>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <SystemDataProvider>{children}</SystemDataProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

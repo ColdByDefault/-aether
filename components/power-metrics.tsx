@@ -1,33 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
+import { useSystemDataContext } from '@/context/system-data-context';
+import type { PowerData } from '@/hooks/use-system-data';
 
-interface BatteryInfo {
-  name: string;
-  status: string;
-  capacity: number;
-  capacityLevel: string;
-  technology: string;
-  cycleCount: number;
-  voltageNow: number;
-  voltageMinDesign: number;
-  currentNow: number;
-  chargeFull: number;
-  chargeFullDesign: number;
-  chargeNow: number;
-  health: number;
-  powerWatts: number;
-  timeRemainingMinutes: number | null;
-  manufacturer: string;
-  model: string;
-}
-
-interface PowerData {
-  acOnline: boolean;
-  batteries: BatteryInfo[];
-  timestamp: string;
-}
+import type { BatteryInfo } from '@/app/api/power/route';
 
 function meterColor(percent: number): string {
   if (percent <= 10) return 'bg-destructive';
@@ -130,33 +107,9 @@ function BatteryCard({ bat, acOnline }: { bat: BatteryInfo; acOnline: boolean })
 }
 
 export function PowerMetrics() {
-  const [data, setData] = useState<PowerData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-
-    const fetchPower = async () => {
-      try {
-        const res = await fetch('/api/power');
-        if (!res.ok) throw new Error('Failed to fetch power data');
-        const result = await res.json();
-        if (!active) return;
-        setData(result);
-        setError(null);
-        setLoading(false);
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setLoading(false);
-      }
-    };
-
-    fetchPower();
-    const interval = setInterval(fetchPower, 15_000);
-    return () => { active = false; clearInterval(interval); };
-  }, []);
+  const { power: data, connected } = useSystemDataContext();
+  const loading = data === null;
+  const error = !connected && loading ? 'connecting...' : null;
 
   const hasBatteries = data && data.batteries.length > 0;
 
@@ -168,7 +121,7 @@ export function PowerMetrics() {
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
           <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
-          {error ? 'error' : loading ? 'polling' : 'live · 15s'}
+          {!connected ? 'reconnecting...' : loading ? 'connecting...' : 'live · ws'}
         </span>
       </div>
 
