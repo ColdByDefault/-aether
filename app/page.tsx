@@ -9,6 +9,7 @@ import { AiAnalysis } from '@/components/ai-analysis';
 import { ThemeToggle } from '@/components/theme-toggle';
 import VersionDisplay from "@/components/VersionDisplay";
 import { Badge } from '@/components/ui/badge';
+import { AptReportDialog } from '@/components/apt-report-dialog';
 import Link from 'next/link';
 
 
@@ -415,17 +416,22 @@ export default function Page() {
                               {job.name.toLowerCase().replace(/\s+/g, "-")}
                             </span>
                           </div>
-                          <span
-                            className={
-                              ok
-                                ? "accent-text"
-                                : failed
-                                  ? "text-destructive"
-                                  : "text-muted-foreground/50"
-                            }
-                          >
-                            {statusLabel}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={
+                                ok
+                                  ? "accent-text"
+                                  : failed
+                                    ? "text-destructive"
+                                    : "text-muted-foreground/50"
+                              }
+                            >
+                              {statusLabel}
+                            </span>
+                            {!job.noAgent && (
+                              <AptReportDialog jobName={job.name} />
+                            )}
+                          </div>
                         </div>
                         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 pl-5 text-xs text-muted-foreground/60">
                           {job.schedule && <span>{job.schedule}</span>}
