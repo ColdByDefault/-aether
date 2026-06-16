@@ -8,7 +8,7 @@ export function ServiceProbe() {
   const { status: data, connected } = useSystemDataContext();
 
   return (
-    <div className="panel flex h-full flex-col">
+    <div className="panel flex h-auto flex-col">
       <PanelHeader
         icon={Server}
         label="Service Probe"

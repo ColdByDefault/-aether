@@ -20,8 +20,10 @@ export function Navbar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 font-mono text-sm">
             <span className="accent-text">▮</span>
-            <span className="font-semibold text-foreground">aether</span>
-            <span className="text-muted-foreground">/ daemon</span>
+            <Link href="/" className="font-bold text-foreground">
+                <span className="font-semibold text-foreground">aether</span>
+                <span className="text-muted-foreground">/ daemon</span>
+            </Link>
           </div>
 
           <div className="lg:hidden">

@@ -41,8 +41,8 @@ export default function Page() {
 
         {/*
           Small / medium: single stacked column (flex-col), grouped by topic.
-          Large (xl): 4-column masonry via CSS columns so cards fill naturally
-          without leaving gaps from mismatched heights.
+          Large (xl): 2 columns — left holds the always-expanded cards,
+          right holds the collapsible cards (API Health, Recent Events, Open Ports).
         */}
 
         {/* sm / md: stacked, topic-ordered */}
@@ -64,29 +64,27 @@ export default function Page() {
           <HermesCron />
         </div>
 
-        {/* xl+: 4-column masonry */}
-        <div
-          className="hidden xl:block"
-          style={{ columns: 4, columnGap: '1rem' }}
-        >
-          {/* Column 1 — System Health */}
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><SystemMetrics /></div>
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><CpuTemp /></div>
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><SwapUsage /></div>
+        {/* xl+: 2 columns — left = always-expanded, right = collapsible */}
+        <div className="hidden gap-4 xl:grid xl:grid-cols-2">
+          {/* Left column — always-expanded cards */}
+          <div className="flex flex-col gap-4">
+            <SystemMetrics />
+            <CpuTemp />
+            <SwapUsage />
+            
+            <TcpConnections />
+          </div>
 
-          {/* Column 2 — Power & Services */}
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><PowerMetrics /></div>
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><ServiceProbe /></div>
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><ApiHealthCard /></div>
-
-          {/* Column 3 — Activity & AI */}
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><EventFeed /></div>
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><AiAnalysis /></div>
-
-          {/* Column 4 — Network & Automation */}
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><OpenPorts /></div>
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><TcpConnections /></div>
-          <div style={{ breakInside: 'avoid', marginBottom: '1rem' }}><HermesCron /></div>
+          {/* Right column — collapsible cards */}
+          <div className="flex flex-col gap-4">
+            <ServiceProbe />
+            <PowerMetrics />
+            <AiAnalysis />
+            <HermesCron />
+            <ApiHealthCard />
+            <EventFeed />
+            <OpenPorts />
+          </div>
         </div>
 
       </main>

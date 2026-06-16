@@ -23,7 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Activity, RefreshCw, Zap } from "lucide-react"
+import { Activity, ChevronDown, RefreshCw, Zap } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -244,6 +245,7 @@ export function ApiHealthCard({
   const [globalLoading, setGlobalLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogData, setDialogData] = useState<TestDialogData | null>(null)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     async function discover() {
@@ -352,7 +354,7 @@ export function ApiHealthCard({
 
   return (
     <>
-      <div className={cn("panel flex flex-col", className)}>
+      <Collapsible open={open} onOpenChange={setOpen} className={cn("panel flex flex-col", className)}>
         {/* Header */}
         <div className="panel-header">
           <Activity className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -369,36 +371,41 @@ export function ApiHealthCard({
             <RefreshCw className={cn("h-3 w-3", globalLoading && "animate-spin")} />
             {globalLoading ? "testing…" : "test all"}
           </Button>
+          <CollapsibleTrigger className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer">
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+          </CollapsibleTrigger>
         </div>
 
         {/* Route list */}
-        <div className="flex-1 divide-y divide-border overflow-auto">
-          {scanning ? (
-            <div className="flex flex-col gap-2 p-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-7 rounded bg-muted/60 animate-pulse" />
-              ))}
-            </div>
-          ) : routes.length === 0 ? (
-            <p className="px-4 py-6 font-mono text-sm text-muted-foreground">
-              no api routes detected
-            </p>
-          ) : (
-            routes.map((result) => (
-              <RouteRow
-                key={result.route}
-                result={result}
-                onTest={testRoute}
-                onMethodChange={changeMethod}
-                onViewResponse={(data) => {
-                  setDialogData(data)
-                  setDialogOpen(true)
-                }}
-              />
-            ))
-          )}
-        </div>
-      </div>
+        <CollapsibleContent>
+          <div className="flex-1 divide-y divide-border overflow-auto">
+            {scanning ? (
+              <div className="flex flex-col gap-2 p-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-7 rounded bg-muted/60 animate-pulse" />
+                ))}
+              </div>
+            ) : routes.length === 0 ? (
+              <p className="px-4 py-6 font-mono text-sm text-muted-foreground">
+                no api routes detected
+              </p>
+            ) : (
+              routes.map((result) => (
+                <RouteRow
+                  key={result.route}
+                  result={result}
+                  onTest={testRoute}
+                  onMethodChange={changeMethod}
+                  onViewResponse={(data) => {
+                    setDialogData(data)
+                    setDialogOpen(true)
+                  }}
+                />
+              ))
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       <ResponseDialog data={dialogData} open={dialogOpen} onOpenChange={setDialogOpen} />
     </>
