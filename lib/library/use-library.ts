@@ -35,6 +35,12 @@ export function useLibrary() {
     setDocuments((prev) => prev.filter((d) => d.id !== id))
   }, [])
 
+  const removeDocuments = useCallback(async (ids: string[]) => {
+    await Promise.all(ids.map((id) => fetch(`/api/library/${id}`, { method: "DELETE" })))
+    const idSet = new Set(ids)
+    setDocuments((prev) => prev.filter((d) => !idSet.has(d.id)))
+  }, [])
+
   const toggleStar = useCallback(async (id: string) => {
     const current = documents.find((d) => d.id === id)
     if (!current) return
@@ -61,5 +67,13 @@ export function useLibrary() {
     setDocuments((prev) => prev.map((d) => (d.id === id ? data.document : d)))
   }, [documents])
 
-  return { documents, isLoading, addDocument, removeDocument, toggleStar, toggleHidden }
+  return {
+    documents,
+    isLoading,
+    addDocument,
+    removeDocument,
+    removeDocuments,
+    toggleStar,
+    toggleHidden,
+  }
 }

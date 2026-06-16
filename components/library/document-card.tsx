@@ -1,7 +1,7 @@
 "use client"
 
-import { useRef } from "react"
-import { FileText, BookOpen, Star, EyeOff, Eye, Trash2 } from "lucide-react"
+import { useRef, type MouseEvent } from "react"
+import { FileText, BookOpen, Star, EyeOff, Eye, Trash2, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   ContextMenu,
@@ -19,6 +19,9 @@ interface DocumentCardProps {
   onDelete: (id: string) => void
   onToggleStar: (id: string) => void
   onToggleHide: (id: string) => void
+  selected: boolean
+  selectionActive: boolean
+  onToggleSelect: (id: string) => void
 }
 
 function formatBytes(bytes: number): string {
@@ -41,10 +44,17 @@ export function DocumentCard({
   onDelete,
   onToggleStar,
   onToggleHide,
+  selected,
+  selectionActive,
+  onToggleSelect,
 }: DocumentCardProps) {
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleClick = () => {
+  const handleClick = (e: MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || selectionActive) {
+      onToggleSelect(doc.id)
+      return
+    }
     if (clickTimer.current) {
       // Double-click — clear single click and do nothing (context menu handles actions)
       clearTimeout(clickTimer.current)
@@ -65,6 +75,7 @@ export function DocumentCard({
             "panel rounded-lg overflow-hidden flex flex-col group cursor-pointer select-none",
             "hover:border-primary/50 transition-colors",
             doc.hidden && "opacity-50",
+            selected && "ring-2 ring-primary border-primary/50",
           )}
           onClick={handleClick}
           role="button"
@@ -76,6 +87,29 @@ export function DocumentCard({
         >
           {/* Thumbnail area */}
           <div className="relative flex flex-col items-center justify-center gap-3 bg-accent/40 group-hover:bg-accent/60 transition-colors px-4 py-7">
+            {/* Selection checkbox */}
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={selected}
+              aria-label={selected ? `Deselect ${doc.name}` : `Select ${doc.name}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleSelect(doc.id)
+              }}
+              className={cn(
+                "absolute top-2 left-2 flex items-center justify-center size-4.5 rounded-sm border transition-colors",
+                selected
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : cn(
+                      "bg-card/80 border-border opacity-0 group-hover:opacity-100",
+                      selectionActive && "opacity-100",
+                    ),
+              )}
+            >
+              {selected && <Check className="size-3" />}
+            </button>
+
             {/* Stacked paper effect */}
             <div className="relative size-14">
               <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 rounded bg-border" />
@@ -94,7 +128,7 @@ export function DocumentCard({
 
             {/* Hidden indicator */}
             {doc.hidden && (
-              <div className="absolute top-2 left-2">
+              <div className="absolute bottom-2 left-2">
                 <EyeOff className="size-3.5 text-muted-foreground" />
               </div>
             )}

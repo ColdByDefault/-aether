@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { BookOpen, Search, Star, EyeOff } from "lucide-react"
+import { BookOpen, Search, Star, EyeOff, Trash2, X } from "lucide-react"
 import { useLibrary } from "@/lib/library/use-library"
 import { UploadZone } from "./upload-zone"
 import { DocumentCard } from "./document-card"
@@ -15,12 +15,20 @@ import type { LibraryDocument } from "@/lib/library/types"
 type FilterMode = "all" | "starred" | "hidden"
 
 export function LibraryShell() {
-  const { documents, isLoading, addDocument, removeDocument, toggleStar, toggleHidden } =
-    useLibrary()
+  const {
+    documents,
+    isLoading,
+    addDocument,
+    removeDocument,
+    removeDocuments,
+    toggleStar,
+    toggleHidden,
+  } = useLibrary()
   const [activeDoc, setActiveDoc] = useState<LibraryDocument | null>(null)
   const [uploading, setUploading] = useState(false)
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<FilterMode>("all")
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const filtered = documents.filter((d) => {
     const matchesQuery = d.name.toLowerCase().includes(query.toLowerCase())
@@ -56,7 +64,33 @@ export function LibraryShell() {
     const doc = documents.find((d) => d.id === id)
     removeDocument(id)
     if (activeDoc?.id === id) setActiveDoc(null)
+    setSelectedIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
     toast.success(`"${doc?.name}" removed`)
+  }
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const clearSelection = () => setSelectedIds(new Set())
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    await removeDocuments(ids)
+    if (activeDoc && selectedIds.has(activeDoc.id)) setActiveDoc(null)
+    clearSelection()
+    toast.success(`${ids.length} document${ids.length === 1 ? "" : "s"} removed`)
   }
 
   const handleToggleHide = (id: string) => {
@@ -108,6 +142,35 @@ export function LibraryShell() {
             </div>
           )}
         </div>
+
+        {/* Bulk selection bar */}
+        {selectedIds.size > 0 && (
+          <div className="panel rounded-md px-3 py-2 flex items-center justify-between gap-3">
+            <span className="text-xs text-muted-foreground">
+              {selectedIds.size} selected
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelection}
+                className="h-7 px-2.5 text-xs gap-1.5"
+              >
+                <X className="size-3.5" />
+                Clear
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBulkDelete}
+                className="h-7 px-2.5 text-xs gap-1.5 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="size-3.5" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Filter tabs */}
         {documents.length > 0 && (
@@ -177,6 +240,9 @@ export function LibraryShell() {
                 onDelete={handleDelete}
                 onToggleStar={handleToggleStar}
                 onToggleHide={handleToggleHide}
+                selected={selectedIds.has(doc.id)}
+                selectionActive={selectedIds.size > 0}
+                onToggleSelect={handleToggleSelect}
               />
             ))}
           </div>
