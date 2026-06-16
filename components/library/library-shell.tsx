@@ -1,41 +1,79 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { BookOpen, Search, Star, EyeOff, Trash2, X } from "lucide-react"
+import { BookOpen, ChevronRight, EyeOff, FolderPlus, Search, Star, Trash2, X } from "lucide-react"
 import { useLibrary } from "@/lib/library/use-library"
 import { UploadZone } from "./upload-zone"
 import { DocumentCard } from "./document-card"
+import { FolderCard } from "./folder-card"
 import { PdfViewer } from "./pdf-viewer"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import type { LibraryDocument } from "@/lib/library/types"
+import type { LibraryDocument, LibraryFolder } from "@/lib/library/types"
 
 type FilterMode = "all" | "starred" | "hidden"
 
 export function LibraryShell() {
   const {
     documents,
+    folders,
     isLoading,
     addDocument,
     removeDocument,
     removeDocuments,
     toggleStar,
     toggleHidden,
+    moveDocuments,
+    addFolder,
+    removeFolder,
   } = useLibrary()
   const [activeDoc, setActiveDoc] = useState<LibraryDocument | null>(null)
   const [uploading, setUploading] = useState(false)
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<FilterMode>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false)
+  const [newFolderName, setNewFolderName] = useState("")
 
-  const filtered = documents.filter((d) => {
-    const matchesQuery = d.name.toLowerCase().includes(query.toLowerCase())
-    if (filter === "starred") return matchesQuery && d.starred && !d.hidden
-    if (filter === "hidden") return matchesQuery && d.hidden
-    return matchesQuery && !d.hidden
-  })
+  useEffect(() => {
+    if (filter !== "all") setCurrentFolderId(null)
+  }, [filter])
+
+  const inFolderView = filter === "all"
+  const currentFolder = folders.find((f) => f.id === currentFolderId) ?? null
+
+  const scopedDocuments = inFolderView
+    ? documents.filter(
+        (d) =>
+          !d.hidden && (currentFolderId === null ? d.folderId === null : d.folderId === currentFolderId),
+      )
+    : documents.filter((d) => (filter === "starred" ? d.starred && !d.hidden : d.hidden))
+
+  const filtered = scopedDocuments.filter((d) =>
+    d.name.toLowerCase().includes(query.toLowerCase()),
+  )
+
+  const visibleFolders =
+    inFolderView && currentFolderId === null
+      ? folders.filter((f) => f.name.toLowerCase().includes(query.toLowerCase()))
+      : []
 
   const handleFiles = async (files: File[]) => {
     setUploading(true)
@@ -108,6 +146,53 @@ export function LibraryShell() {
     toast.success(doc.starred ? `Removed star from "${doc.name}"` : `Starred "${doc.name}"`)
   }
 
+  const handleMoveToFolder = (id: string, folderId: string | null) => {
+    const doc = documents.find((d) => d.id === id)
+    const folder = folders.find((f) => f.id === folderId)
+    moveDocuments([id], folderId)
+    toast.success(
+      folder ? `Moved "${doc?.name}" to "${folder.name}"` : `Removed "${doc?.name}" from folder`,
+    )
+  }
+
+  const handleBulkMove = (folderId: string | null) => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    const folder = folders.find((f) => f.id === folderId)
+    moveDocuments(ids, folderId)
+    clearSelection()
+    toast.success(
+      folder
+        ? `Moved ${ids.length} document${ids.length === 1 ? "" : "s"} to "${folder.name}"`
+        : `Removed ${ids.length} document${ids.length === 1 ? "" : "s"} from folder`,
+    )
+  }
+
+  const handleOpenFolder = (folder: LibraryFolder) => {
+    setCurrentFolderId(folder.id)
+    clearSelection()
+  }
+
+  const handleDeleteFolder = (id: string) => {
+    const folder = folders.find((f) => f.id === id)
+    removeFolder(id)
+    if (currentFolderId === id) setCurrentFolderId(null)
+    toast.success(`"${folder?.name}" deleted. Its documents are now unfiled.`)
+  }
+
+  const handleCreateFolder = async () => {
+    const name = newFolderName.trim()
+    if (!name) return
+    try {
+      await addFolder(name)
+      toast.success(`Folder "${name}" created`)
+      setNewFolderName("")
+      setFolderDialogOpen(false)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create folder")
+    }
+  }
+
   const visibleCount = documents.filter((d) => !d.hidden).length
   const hiddenCount = documents.filter((d) => d.hidden).length
   const starredCount = documents.filter((d) => d.starred && !d.hidden).length
@@ -119,7 +204,9 @@ export function LibraryShell() {
         ? "No hidden documents."
         : query
           ? "No documents match your search."
-          : "No documents yet. Upload a PDF to get started."
+          : currentFolder
+            ? "This folder is empty."
+            : "No documents yet. Upload a PDF to get started."
 
   return (
     <>
@@ -128,20 +215,45 @@ export function LibraryShell() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <UploadZone onFiles={handleFiles} disabled={uploading} />
 
-          {documents.length > 0 && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-              <input
-                type="search"
-                placeholder="Search files..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="panel rounded-md pl-7 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground bg-transparent focus:outline-none focus:ring-2 focus:ring-ring w-52"
-                aria-label="Search documents"
-              />
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {documents.length > 0 && (
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  type="search"
+                  placeholder="Search files..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="panel rounded-md pl-7 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground bg-transparent focus:outline-none focus:ring-2 focus:ring-ring w-52"
+                  aria-label="Search documents"
+                />
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={() => setFolderDialogOpen(true)}
+            >
+              <FolderPlus className="size-3.5" />
+              New folder
+            </Button>
+          </div>
         </div>
+
+        {/* Breadcrumb */}
+        {inFolderView && currentFolder && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <button
+              className="hover:text-foreground transition-colors"
+              onClick={() => setCurrentFolderId(null)}
+            >
+              All documents
+            </button>
+            <ChevronRight className="size-3" />
+            <span className="text-foreground font-medium">{currentFolder.name}</span>
+          </div>
+        )}
 
         {/* Bulk selection bar */}
         {selectedIds.size > 0 && (
@@ -150,6 +262,21 @@ export function LibraryShell() {
               {selectedIds.size} selected
             </span>
             <div className="flex items-center gap-1.5">
+              <Select
+                onValueChange={(value) => handleBulkMove(value === "none" ? null : (value as string))}
+              >
+                <SelectTrigger size="sm" className="h-7 text-xs">
+                  <SelectValue placeholder="Move to folder..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unfiled</SelectItem>
+                  {folders.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 variant="ghost"
                 size="sm"
@@ -225,21 +352,32 @@ export function LibraryShell() {
               <Skeleton key={i} className="h-48 rounded-lg" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : filtered.length === 0 && visibleFolders.length === 0 ? (
           <div className="panel rounded-lg p-12 flex flex-col items-center gap-2 text-center">
             <BookOpen className="size-8 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">{emptyMessage}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {visibleFolders.map((folder) => (
+              <FolderCard
+                key={folder.id}
+                folder={folder}
+                documentCount={documents.filter((d) => d.folderId === folder.id && !d.hidden).length}
+                onOpen={handleOpenFolder}
+                onDelete={handleDeleteFolder}
+              />
+            ))}
             {filtered.map((doc) => (
               <DocumentCard
                 key={doc.id}
                 doc={doc}
+                folders={folders}
                 onOpen={setActiveDoc}
                 onDelete={handleDelete}
                 onToggleStar={handleToggleStar}
                 onToggleHide={handleToggleHide}
+                onMoveToFolder={handleMoveToFolder}
                 selected={selectedIds.has(doc.id)}
                 selectionActive={selectedIds.size > 0}
                 onToggleSelect={handleToggleSelect}
@@ -248,6 +386,32 @@ export function LibraryShell() {
           </div>
         )}
       </div>
+
+      <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New folder</DialogTitle>
+          </DialogHeader>
+          <input
+            autoFocus
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreateFolder()
+            }}
+            placeholder="Folder name"
+            className="panel rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground bg-transparent focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setFolderDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleCreateFolder}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <PdfViewer doc={activeDoc} onClose={() => setActiveDoc(null)} />
     </>

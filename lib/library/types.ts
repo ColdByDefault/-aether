@@ -5,4 +5,12 @@ export interface LibraryDocument {
   uploadedAt: string
   starred: boolean
   hidden: boolean
+  folderId: string | null
+}
+
+export interface LibraryFolder {
+  id: string
+  name: string
+  createdAt: string
+  documentCount: number
 }

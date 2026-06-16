@@ -13,6 +13,7 @@ export async function GET() {
       starred: true,
       hidden: true,
       uploadedAt: true,
+      folderId: true,
     },
     orderBy: { uploadedAt: "desc" },
   })
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
       starred: true,
       hidden: true,
       uploadedAt: true,
+      folderId: true,
     },
   })
 

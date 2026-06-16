@@ -26,7 +26,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { id } = await params
   const body = await req.json().catch(() => null)
 
-  if (!body || (typeof body.starred !== "boolean" && typeof body.hidden !== "boolean")) {
+  const hasFolderId = typeof body?.folderId === "string" || body?.folderId === null
+  if (
+    !body ||
+    (typeof body.starred !== "boolean" && typeof body.hidden !== "boolean" && !hasFolderId)
+  ) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
   }
 
@@ -36,6 +40,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       data: {
         ...(typeof body.starred === "boolean" ? { starred: body.starred } : {}),
         ...(typeof body.hidden === "boolean" ? { hidden: body.hidden } : {}),
+        ...(hasFolderId ? { folderId: body.folderId } : {}),
       },
       select: {
         id: true,
@@ -44,6 +49,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         starred: true,
         hidden: true,
         uploadedAt: true,
+        folderId: true,
       },
     })
     .catch(() => null)

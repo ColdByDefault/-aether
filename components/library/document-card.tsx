@@ -1,24 +1,29 @@
 "use client"
 
 import { useRef, type MouseEvent } from "react"
-import { FileText, BookOpen, Star, EyeOff, Eye, Trash2, Check } from "lucide-react"
+import { FileText, BookOpen, Star, EyeOff, Eye, Trash2, Check, Folder as FolderIcon, FolderMinus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import { cn } from "@/lib/utils"
-import type { LibraryDocument } from "@/lib/library/types"
+import type { LibraryDocument, LibraryFolder } from "@/lib/library/types"
 
 interface DocumentCardProps {
   doc: LibraryDocument
+  folders: LibraryFolder[]
   onOpen: (doc: LibraryDocument) => void
   onDelete: (id: string) => void
   onToggleStar: (id: string) => void
   onToggleHide: (id: string) => void
+  onMoveToFolder: (id: string, folderId: string | null) => void
   selected: boolean
   selectionActive: boolean
   onToggleSelect: (id: string) => void
@@ -40,10 +45,12 @@ function formatDate(iso: string): string {
 
 export function DocumentCard({
   doc,
+  folders,
   onOpen,
   onDelete,
   onToggleStar,
   onToggleHide,
+  onMoveToFolder,
   selected,
   selectionActive,
   onToggleSelect,
@@ -180,6 +187,36 @@ export function DocumentCard({
             </>
           )}
         </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <FolderIcon className="size-3.5 mr-2" />
+            Move to folder
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-44">
+            {doc.folderId && (
+              <>
+                <ContextMenuItem onSelect={() => onMoveToFolder(doc.id, null)}>
+                  <FolderMinus className="size-3.5 mr-2" />
+                  Remove from folder
+                </ContextMenuItem>
+                {folders.length > 0 && <ContextMenuSeparator />}
+              </>
+            )}
+            {folders.length === 0 ? (
+              <ContextMenuItem disabled>No folders yet</ContextMenuItem>
+            ) : (
+              folders
+                .filter((f) => f.id !== doc.folderId)
+                .map((f) => (
+                  <ContextMenuItem key={f.id} onSelect={() => onMoveToFolder(doc.id, f.id)}>
+                    <FolderIcon className="size-3.5 mr-2" />
+                    {f.name}
+                  </ContextMenuItem>
+                ))
+            )}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
         <ContextMenuSeparator />
         <ContextMenuItem
           onSelect={() => onDelete(doc.id)}

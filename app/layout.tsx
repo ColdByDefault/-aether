@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SystemDataProvider } from '@/context/system-data-context'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { Navbar } from '@/components/navabr'
 import './globals.css'
 import '@xterm/xterm/css/xterm.css'
 
@@ -51,6 +52,7 @@ export default function RootLayout({
         <ThemeProvider>
           <SystemDataProvider>
             <TooltipProvider>
+              <Navbar />
               {children}
             </TooltipProvider>
           </SystemDataProvider>

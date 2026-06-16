@@ -21,4 +21,13 @@ model Document {
   starred    Boolean  @default(false)
   hidden     Boolean  @default(false)
   uploadedAt DateTime @default(now())
+  folderId   String?
+  folder     Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+}
+
+model Folder {
+  id        String     @id @default(uuid())
+  name      String
+  createdAt DateTime   @default(now())
+  documents Document[]
 }
