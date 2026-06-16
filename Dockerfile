@@ -6,8 +6,10 @@ WORKDIR /app
 # node-pty requires native compilation tools to build from source on alpine (musl)
 RUN apk add --no-cache python3 make g++ linux-headers
 
-COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+# pnpm-workspace.yaml carries the build-script allowlist (allowBuilds: node-pty)
+# that pnpm v10+ requires to compile node-pty's native module.
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
+RUN npm install -g pnpm@11.7.0 && pnpm install --frozen-lockfile
 
 COPY . .
 RUN npm run build

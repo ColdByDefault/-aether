@@ -1,2 +1,10 @@
+# node-pty is the only dependency whose native build we actually need.
 allowBuilds:
   node-pty: true
+
+# Other transitive deps (sharp, msw, …) ship prebuilt binaries or only need
+# their build scripts for browser/dev use, so we don't build them. pnpm v11
+# defaults strictDepBuilds=true, which turns those *ignored* builds into a hard
+# install failure. Turn it off so they're skipped quietly instead of breaking
+# the Docker build every time a new transitive dep adds a postinstall script.
+strictDepBuilds: false
