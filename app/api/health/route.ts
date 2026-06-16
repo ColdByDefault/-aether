@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'fs';
+import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -21,9 +21,26 @@ function scanApiRoutes(apiDir: string, base = '/api'): string[] {
   return routes;
 }
 
+// The production image only ships the `.next` build output, not the `app/`
+// source tree, so filesystem scanning finds nothing there. The build's own
+// route manifest is present in both dev and prod and is the reliable source.
+function routesFromBuildManifest(): string[] | null {
+  const manifestPath = join(process.cwd(), '.next', 'app-path-routes-manifest.json');
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as Record<string, string>;
+    return Object.entries(manifest)
+      .filter(([key, value]) => key.endsWith('/route') && value.startsWith('/api'))
+      .map(([, value]) => value);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   const apiDir = join(process.cwd(), 'app', 'api');
-  const routes = scanApiRoutes(apiDir).filter((r) => r !== '/api/health');
+  const routes = (routesFromBuildManifest() ?? scanApiRoutes(apiDir)).filter(
+    (r) => r !== '/api/health'
+  );
   return NextResponse.json({ routes });
 }
 
