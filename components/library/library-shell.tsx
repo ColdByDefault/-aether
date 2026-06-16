@@ -25,9 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { mapWithConcurrency } from "@/lib/library/concurrency"
 import type { LibraryDocument, LibraryFolder } from "@/lib/library/types"
 
 type FilterMode = "all" | "starred" | "hidden"
+const UPLOAD_CONCURRENCY = 4
 
 export function LibraryShell() {
   const {
@@ -75,27 +77,51 @@ export function LibraryShell() {
       ? folders.filter((f) => f.name.toLowerCase().includes(query.toLowerCase()))
       : []
 
+  const uploadOne = async (file: File): Promise<{ name: string; error?: string }> => {
+    try {
+      const res = await fetch("/api/library/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size }),
+      })
+      const data = await res.json()
+      if (!res.ok) return { name: file.name, error: data.error ?? "Upload failed" }
+
+      await addDocument(file, currentFolderId)
+      return { name: file.name }
+    } catch {
+      return { name: file.name, error: "Upload failed" }
+    }
+  }
+
   const handleFiles = async (files: File[]) => {
     setUploading(true)
-    for (const file of files) {
-      try {
-        const res = await fetch("/api/library/validate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: file.name, size: file.size }),
-        })
-        const data = await res.json()
-        if (!res.ok) {
-          toast.error(data.error ?? "Upload failed")
-          continue
-        }
-        await addDocument(file)
-        toast.success(`"${file.name}" added to library`)
-      } catch {
-        toast.error(`Failed to upload "${file.name}"`)
-      }
+
+    if (files.length === 1) {
+      const result = await uploadOne(files[0])
+      if (result.error) toast.error(result.error)
+      else toast.success(`"${result.name}" added to library`)
+      setUploading(false)
+      return
     }
+
+    const loadingToast = toast.loading(`Uploading ${files.length} files...`)
+    const results = await mapWithConcurrency(files, UPLOAD_CONCURRENCY, uploadOne)
     setUploading(false)
+    toast.dismiss(loadingToast)
+
+    const failed = results.filter((r) => r.error)
+    const succeeded = results.length - failed.length
+
+    if (succeeded > 0) {
+      toast.success(`${succeeded} file${succeeded === 1 ? "" : "s"} added to library`)
+    }
+    if (failed.length > 0) {
+      toast.error(
+        `${failed.length} file${failed.length === 1 ? "" : "s"} failed to upload`,
+        { description: failed.map((f) => f.name).slice(0, 3).join(", ") + (failed.length > 3 ? "…" : "") },
+      )
+    }
   }
 
   const handleDelete = (id: string) => {

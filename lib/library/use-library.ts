@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react"
 import type { LibraryDocument, LibraryFolder } from "./types"
+import { mapWithConcurrency } from "./concurrency"
+
+const REQUEST_CONCURRENCY = 6
 
 export function useLibrary() {
   const [documents, setDocuments] = useState<LibraryDocument[]>([])
@@ -20,21 +23,25 @@ export function useLibrary() {
       .finally(() => setIsLoading(false))
   }, [])
 
-  const addDocument = useCallback(async (file: File): Promise<LibraryDocument> => {
-    const formData = new FormData()
-    formData.append("file", file)
+  const addDocument = useCallback(
+    async (file: File, folderId?: string | null): Promise<LibraryDocument> => {
+      const formData = new FormData()
+      formData.append("file", file)
+      if (folderId) formData.append("folderId", folderId)
 
-    const res = await fetch("/api/library", { method: "POST", body: formData })
-    const data = await res.json()
+      const res = await fetch("/api/library", { method: "POST", body: formData })
+      const data = await res.json()
 
-    if (!res.ok) {
-      throw new Error(data.error ?? "Upload failed")
-    }
+      if (!res.ok) {
+        throw new Error(data.error ?? "Upload failed")
+      }
 
-    const doc = data.document as LibraryDocument
-    setDocuments((prev) => [doc, ...prev])
-    return doc
-  }, [])
+      const doc = data.document as LibraryDocument
+      setDocuments((prev) => [doc, ...prev])
+      return doc
+    },
+    [],
+  )
 
   const removeDocument = useCallback(async (id: string) => {
     await fetch(`/api/library/${id}`, { method: "DELETE" })
@@ -42,7 +49,9 @@ export function useLibrary() {
   }, [])
 
   const removeDocuments = useCallback(async (ids: string[]) => {
-    await Promise.all(ids.map((id) => fetch(`/api/library/${id}`, { method: "DELETE" })))
+    await mapWithConcurrency(ids, REQUEST_CONCURRENCY, (id) =>
+      fetch(`/api/library/${id}`, { method: "DELETE" }),
+    )
     const idSet = new Set(ids)
     setDocuments((prev) => prev.filter((d) => !idSet.has(d.id)))
   }, [])
@@ -74,14 +83,12 @@ export function useLibrary() {
   }, [documents])
 
   const moveDocuments = useCallback(async (ids: string[], folderId: string | null) => {
-    const results = await Promise.all(
-      ids.map((id) =>
-        fetch(`/api/library/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ folderId }),
-        }).then((res) => res.json()),
-      ),
+    const results = await mapWithConcurrency(ids, REQUEST_CONCURRENCY, (id) =>
+      fetch(`/api/library/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId }),
+      }).then((res) => res.json()),
     )
     const updated = new Map<string, LibraryDocument>(
       results

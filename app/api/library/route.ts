@@ -43,12 +43,14 @@ export async function POST(req: NextRequest) {
   }
 
   const data = Buffer.from(await file.arrayBuffer())
+  const folderId = formData?.get("folderId")
 
   const document = await prisma.document.create({
     data: {
       name: file.name,
       size: file.size,
       data,
+      ...(typeof folderId === "string" && folderId ? { folderId } : {}),
     },
     select: {
       id: true,

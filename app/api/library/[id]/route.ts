@@ -14,10 +14,13 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
 
+  const safeName = document.name.replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "")
+  const encodedName = encodeURIComponent(document.name)
+
   return new NextResponse(Buffer.from(document.data), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${document.name.replace(/"/g, "")}"`,
+      "Content-Disposition": `inline; filename="${safeName}"; filename*=UTF-8''${encodedName}`,
     },
   })
 }
