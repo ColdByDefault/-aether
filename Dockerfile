@@ -1,32 +1,32 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# node-pty requires native compilation tools
+# node-pty requires native compilation tools to build from source on alpine (musl)
 RUN apk add --no-cache python3 make g++ linux-headers
 
 COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm install
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
 # curl/docker-cli/iproute2: existing runtime deps
 # util-linux: provides nsenter (host shell access)
-# python3/make/g++/linux-headers: compile node-pty native module
-RUN apk add --no-cache curl docker-cli iproute2 util-linux python3 make g++ linux-headers
+RUN apk add --no-cache curl docker-cli iproute2 util-linux
 
-COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm install --prod
-
+# Copy node_modules from builder — native modules (node-pty) are already compiled
+# for the correct Node version and alpine/musl environment; no rebuild needed.
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY package.json ./
 COPY server.mjs ./
 
 EXPOSE 3000
