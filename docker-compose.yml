@@ -1,4 +1,24 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: server-dashboard-db
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-dashboard}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-dashboard}
+    # Bound to loopback only — `dashboard` uses network_mode: host so it reaches
+    # this via localhost:5432, not compose DNS.
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dashboard}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   dashboard:
     build:
       context: .
@@ -7,6 +27,9 @@ services:
     network_mode: host
     pid: "host"
     privileged: true
+    depends_on:
+      postgres:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -29,3 +52,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
+
+volumes:
+  postgres_data:

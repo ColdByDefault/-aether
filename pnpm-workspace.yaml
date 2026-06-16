@@ -1,6 +1,11 @@
 # node-pty is the only dependency whose native build we actually need.
 allowBuilds:
+  '@prisma/engines': set this to true or false
+  esbuild: set this to true or false
+  msw: set this to true or false
   node-pty: true
+  prisma: set this to true or false
+  sharp: set this to true or false
 
 # Other transitive deps (sharp, msw, …) ship prebuilt binaries or only need
 # their build scripts for browser/dev use, so we don't build them. pnpm v11
