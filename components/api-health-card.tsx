@@ -34,6 +34,8 @@ type RouteStatus = "idle" | "loading" | "ok" | "error"
 interface RouteResult {
   route: string
   method: HttpMethod
+  supportedMethods: HttpMethod[]
+  dynamic: boolean
   status: RouteStatus
   httpStatus?: number
   latency?: number
@@ -52,7 +54,6 @@ interface TestDialogData {
   testedAt?: Date
 }
 
-const HTTP_METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
 const METHOD_COLORS: Record<HttpMethod, string> = {
   GET:    "text-emerald-600 dark:text-emerald-400",
@@ -151,7 +152,7 @@ function RouteRow({
   onMethodChange: (route: string, method: HttpMethod) => void
   onViewResponse: (data: TestDialogData) => void
 }) {
-  const { route, method, status, httpStatus, latency, error, responseBody, testedAt } = result
+  const { route, method, supportedMethods, dynamic, status, httpStatus, latency, error, responseBody, testedAt } = result
   const isLoading = status === "loading"
   const hasTested = status === "ok" || status === "error"
 
@@ -169,7 +170,7 @@ function RouteRow({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {HTTP_METHODS.map((m) => (
+          {supportedMethods.map((m) => (
             <SelectItem key={m} value={m} className={cn("text-xs font-mono font-semibold", METHOD_COLORS[m])}>
               {m}
             </SelectItem>
@@ -178,6 +179,10 @@ function RouteRow({
       </Select>
 
       <code className="flex-1 text-sm font-mono text-foreground truncate min-w-0">{route}</code>
+
+      {dynamic && (
+        <Badge variant="outline" className="text-xs shrink-0 font-mono text-muted-foreground">dynamic</Badge>
+      )}
 
       {latency !== undefined && (
         <span className="text-xs text-muted-foreground tabular-nums shrink-0">{latency}ms</span>
@@ -252,8 +257,14 @@ export function ApiHealthCard({
       setScanning(true)
       try {
         const res = await fetch(healthEndpoint)
-        const { routes: discovered } = (await res.json()) as { routes: string[] }
-        setRoutes(discovered.map((r) => ({ route: r, method: "GET" as HttpMethod, status: "idle" as RouteStatus })))
+        const { routes: discovered } = (await res.json()) as { routes: { path: string; methods: HttpMethod[]; dynamic: boolean }[] }
+        setRoutes(discovered.map((r) => ({
+          route: r.path,
+          method: r.methods[0] ?? "GET" as HttpMethod,
+          supportedMethods: r.methods.length > 0 ? r.methods : ["GET" as HttpMethod],
+          dynamic: r.dynamic,
+          status: "idle" as RouteStatus,
+        })))
       } catch {
         setRoutes([])
       } finally {
@@ -314,7 +325,7 @@ export function ApiHealthCard({
   const testAll = useCallback(async () => {
     setGlobalLoading(true)
     await Promise.allSettled(
-      routes.map((r) =>
+      routes.filter((r) => !r.dynamic && r.method === "GET").map((r) =>
         fetch(healthEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
