@@ -1,5 +1,5 @@
 import { AiAnalysis } from '@/components/ai-analysis';
-import { EventFeed } from '@/components/event-feed';
+import { EventFeed } from '@/components/logs/event-feed';
 
 
 export default function LogsPage() {

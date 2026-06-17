@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { Thermometer } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { useSystemDataContext } from '@/context/system-data-context';
-import { HistorySparkline } from '@/components/history-sparkline';
+import { Thermometer } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useSystemDataContext } from "@/context/system-data-context";
+import { HistorySparkline } from "@/components/history-sparkline";
 
 const TEMP_MAX = 100;
 
 function tempColor(celsius: number): string {
-  if (celsius >= 80) return 'text-destructive';
-  if (celsius >= 60) return 'text-chart-4';
-  return 'text-primary';
+  if (celsius >= 80) return "text-destructive";
+  if (celsius >= 60) return "text-chart-4";
+  return "text-primary";
 }
 
 function tempBarClass(celsius: number): string {
-  if (celsius >= 80) return '[&>div]:bg-destructive';
-  if (celsius >= 60) return '[&>div]:bg-chart-4';
-  return '';
+  if (celsius >= 80) return "[&>div]:bg-destructive";
+  if (celsius >= 60) return "[&>div]:bg-chart-4";
+  return "";
 }
 
 export function CpuTemp() {
   const { hardware: data, connected } = useSystemDataContext();
   const loading = data === null;
-  const error = !connected && loading ? 'connecting...' : null;
+  const error = !connected && loading ? "connecting..." : null;
 
   const zones = data?.cpuTemps ?? [];
 
@@ -33,8 +33,14 @@ export function CpuTemp() {
         <span className="uppercase tracking-wider">CPU Temperature</span>
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
-          <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
-          {!connected ? 'reconnecting...' : loading ? 'connecting...' : 'live · ws'}
+          <span
+            className={`term-dot h-1.5 w-1.5 ${error ? "bg-destructive" : "bg-primary"}`}
+          />
+          {!connected
+            ? "reconnecting..."
+            : loading
+              ? "connecting..."
+              : "live · ws"}
         </span>
       </div>
 
@@ -50,7 +56,9 @@ export function CpuTemp() {
         )}
 
         {loading && zones.length === 0 && (
-          <p className="font-mono text-sm text-muted-foreground">reading sensors...</p>
+          <p className="font-mono text-sm text-muted-foreground">
+            reading sensors...
+          </p>
         )}
 
         <div className="space-y-4">
@@ -58,9 +66,11 @@ export function CpuTemp() {
             <div key={z.zone} className="space-y-1.5">
               <div className="flex items-center justify-between font-mono text-sm">
                 <span className="text-muted-foreground">
-                  {z.type !== 'unknown' ? z.type : z.zone}
+                  {z.type !== "unknown" ? z.type : z.zone}
                 </span>
-                <span className={`tabular-nums font-semibold ${tempColor(z.celsius)}`}>
+                <span
+                  className={`tabular-nums font-semibold ${tempColor(z.celsius)}`}
+                >
                   {z.celsius.toFixed(1)}°C
                 </span>
               </div>

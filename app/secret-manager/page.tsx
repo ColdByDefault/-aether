@@ -1,4 +1,3 @@
-import { SecretsManager } from '@/components/secret-manager/SecretsManager';
 
 
 export default function SecretManagerPage() {
@@ -12,7 +11,7 @@ export default function SecretManagerPage() {
           aes-256-gcm encrypted · stored locally · never leaves your device
         </p>
       </header>
-      <SecretsManager />
+      
     </main>
   );
 }

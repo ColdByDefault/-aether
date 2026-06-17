@@ -1,6 +1,6 @@
-import { ServiceProbe } from '@/components/service-probe';
+import { ServiceProbe } from '@/components/network/service-probe';
 import { ApiHealthCard } from '@/components/api-health-card';
-import { OpenPorts } from '@/components/open-ports';
+import { OpenPorts } from '@/components/network/open-ports';
 
 
 export default function ApiNetworkPage() {

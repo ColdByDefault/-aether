@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { ThemeProvider } from '@/components/theme-provider'
+import { ThemeProvider } from '@/components/theme/theme-provider'
 import { SystemDataProvider } from '@/context/system-data-context'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Navbar } from '@/components/navabr'

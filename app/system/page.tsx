@@ -1,6 +1,6 @@
 import { SystemMetrics } from '@/components/system-metrics';
-import { CpuTemp } from '@/components/cpu-temp';
-import { SwapUsage } from '@/components/swap-usage';
+import { CpuTemp } from '@/components/system-metrics/cpu-temp';
+import { SwapUsage } from '@/components/system-metrics/swap-usage';
 import { PowerMetrics } from '@/components/power-metrics';
 
 

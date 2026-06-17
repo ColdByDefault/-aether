@@ -2,7 +2,7 @@
 
 import { Monitor, Network, ScrollText, TerminalSquare, SquareLibrary, Container, Key } from 'lucide-react';
 import Link from 'next/link';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 const NAV = [
   { id: "/system", label: "System", Icon: Monitor },

@@ -1,19 +1,34 @@
-"use client"
+"use client";
 
-import { Monitor, Cpu, MemoryStick, HardDrive, Server } from "lucide-react"
-import { Sparkline } from "@/components/sparkline"
-import { HistorySparkline } from "@/components/history-sparkline"
-import type { ProcessEntry } from "@/hooks/use-system-data"
-import { formatBytes, formatUptime, meterColor, useSystemMetrics } from "./system-metrics.logic"
+import { Monitor, Cpu, MemoryStick, HardDrive, Server } from "lucide-react";
+import { Sparkline } from "@/components/sparkline";
+import { HistorySparkline } from "@/components/history-sparkline";
+import type { ProcessEntry } from "@/hooks/use-system-data";
+import {
+  formatBytes,
+  formatUptime,
+  meterColor,
+  useSystemMetrics,
+} from "./system-metrics.logic";
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
-function Meter({ label, percent, detail }: { label: string; percent: number; detail: string }) {
+function Meter({
+  label,
+  percent,
+  detail,
+}: {
+  label: string;
+  percent: number;
+  detail: string;
+}) {
   return (
     <div className="font-mono text-sm">
       <div className="flex items-center justify-between gap-4">
         <span className="text-muted-foreground">{label}</span>
-        <span className="text-foreground tabular-nums">{percent.toFixed(1)}%</span>
+        <span className="text-foreground tabular-nums">
+          {percent.toFixed(1)}%
+        </span>
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden bg-muted">
         <div
@@ -23,7 +38,7 @@ function Meter({ label, percent, detail }: { label: string; percent: number; det
       </div>
       <p className="mt-1.5 text-xs text-muted-foreground/70">{detail}</p>
     </div>
-  )
+  );
 }
 
 function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
@@ -33,7 +48,7 @@ function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
       <span className="flex-1 border-b border-dashed border-border/60" />
       <span className={accent ? "accent-text" : "text-foreground"}>{v}</span>
     </div>
-  )
+  );
 }
 
 function ProcessList({
@@ -41,15 +56,23 @@ function ProcessList({
   sortBy,
   label,
 }: {
-  procs: ProcessEntry[]
-  sortBy: "cpu" | "mem"
-  label: string
+  procs: ProcessEntry[];
+  sortBy: "cpu" | "mem";
+  label: string;
 }) {
   const sorted = [...procs]
-    .sort((a, b) => (sortBy === "cpu" ? b.cpuPercent - a.cpuPercent : b.memPercent - a.memPercent))
-    .slice(0, 6)
+    .sort((a, b) =>
+      sortBy === "cpu"
+        ? b.cpuPercent - a.cpuPercent
+        : b.memPercent - a.memPercent,
+    )
+    .slice(0, 6);
 
-  const maxVal = sorted[0] ? (sortBy === "cpu" ? sorted[0].cpuPercent : sorted[0].memPercent) : 1
+  const maxVal = sorted[0]
+    ? sortBy === "cpu"
+      ? sorted[0].cpuPercent
+      : sorted[0].memPercent
+    : 1;
 
   return (
     <div className="mt-4 space-y-0.5">
@@ -57,14 +80,21 @@ function ProcessList({
         {label}
       </p>
       {sorted.map((p) => {
-        const val         = sortBy === "cpu" ? p.cpuPercent : p.memPercent
-        const barWidth    = maxVal > 0 ? (val / maxVal) * 100 : 0
-        const displayName = p.name.length > 18 ? p.name.slice(0, 17) + "…" : p.name
-        const secondary   = sortBy === "cpu" ? formatBytes(p.memRss) : `${p.cpuPercent.toFixed(1)}% cpu`
+        const val = sortBy === "cpu" ? p.cpuPercent : p.memPercent;
+        const barWidth = maxVal > 0 ? (val / maxVal) * 100 : 0;
+        const displayName =
+          p.name.length > 18 ? p.name.slice(0, 17) + "…" : p.name;
+        const secondary =
+          sortBy === "cpu"
+            ? formatBytes(p.memRss)
+            : `${p.cpuPercent.toFixed(1)}% cpu`;
         return (
           <div key={p.pid} className="group font-mono text-xs">
             <div className="flex items-center justify-between gap-2">
-              <span className="w-36 shrink-0 truncate text-muted-foreground" title={p.cmdline}>
+              <span
+                className="w-36 shrink-0 truncate text-muted-foreground"
+                title={p.cmdline}
+              >
                 {displayName}
               </span>
               <div className="relative h-1 flex-1 overflow-hidden bg-muted/60">
@@ -81,19 +111,21 @@ function ProcessList({
               </span>
             </div>
           </div>
-        )
+        );
       })}
       {sorted.length === 0 && (
-        <p className="font-mono text-xs text-muted-foreground/50">no data yet</p>
+        <p className="font-mono text-xs text-muted-foreground/50">
+          no data yet
+        </p>
       )}
     </div>
-  )
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function SystemMetrics() {
-  const { data, procs, connected, loading, error } = useSystemMetrics()
+  const { data, procs, connected, loading, error } = useSystemMetrics();
 
   return (
     <section id="system" className="scroll-mt-20 h-full flex flex-col">
@@ -102,8 +134,14 @@ export function SystemMetrics() {
         <span className="uppercase tracking-wider">System Overview</span>
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
-          <span className={`term-dot ${error ? "bg-destructive" : "bg-primary"} h-1.5 w-1.5`} />
-          {!connected ? "reconnecting..." : loading ? "connecting..." : "live · ws"}
+          <span
+            className={`term-dot ${error ? "bg-destructive" : "bg-primary"} h-1.5 w-1.5`}
+          />
+          {!connected
+            ? "reconnecting..."
+            : loading
+              ? "connecting..."
+              : "live · ws"}
         </span>
       </div>
 
@@ -118,7 +156,8 @@ export function SystemMetrics() {
           {/* CPU */}
           <div className="p-4">
             <p className="mb-3 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              <Cpu className="h-3.5 w-3.5 text-primary" />cpu
+              <Cpu className="h-3.5 w-3.5 text-primary" />
+              cpu
             </p>
             {data ? (
               <div className="space-y-3">
@@ -135,25 +174,39 @@ export function SystemMetrics() {
                         pct={data.cpu.usedPercent}
                         height={28}
                       />
-                      <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
+                      <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">
+                        5m
+                      </p>
                     </>
                   )}
                 </div>
-                <HistorySparkline metric="cpuPct" pct={data.cpu.usedPercent} height={28} />
-                <p className="truncate font-mono text-xs text-muted-foreground/70" title={data.cpu.model}>
+                <HistorySparkline
+                  metric="cpuPct"
+                  pct={data.cpu.usedPercent}
+                  height={28}
+                />
+                <p
+                  className="truncate font-mono text-xs text-muted-foreground/70"
+                  title={data.cpu.model}
+                >
                   {data.cpu.model}
                 </p>
-                {procs.length > 0 && <ProcessList procs={procs} sortBy="cpu" label="top by cpu" />}
+                {procs.length > 0 && (
+                  <ProcessList procs={procs} sortBy="cpu" label="top by cpu" />
+                )}
               </div>
             ) : (
-              <p className="font-mono text-sm text-muted-foreground">reading core...</p>
+              <p className="font-mono text-sm text-muted-foreground">
+                reading core...
+              </p>
             )}
           </div>
 
           {/* Memory */}
           <div className="p-4">
             <p className="mb-3 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              <MemoryStick className="h-3.5 w-3.5 text-primary" />memory
+              <MemoryStick className="h-3.5 w-3.5 text-primary" />
+              memory
             </p>
             {data ? (
               <div className="space-y-3">
@@ -170,15 +223,29 @@ export function SystemMetrics() {
                         pct={data.memory.usedPercent}
                         height={28}
                       />
-                      <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">5m</p>
+                      <p className="mt-0.5 text-right font-mono text-[10px] text-muted-foreground/30">
+                        5m
+                      </p>
                     </>
                   )}
                 </div>
-                <HistorySparkline metric="memPct" pct={data.memory.usedPercent} height={28} />
-                {procs.length > 0 && <ProcessList procs={procs} sortBy="mem" label="top by memory" />}
+                <HistorySparkline
+                  metric="memPct"
+                  pct={data.memory.usedPercent}
+                  height={28}
+                />
+                {procs.length > 0 && (
+                  <ProcessList
+                    procs={procs}
+                    sortBy="mem"
+                    label="top by memory"
+                  />
+                )}
               </div>
             ) : (
-              <p className="font-mono text-sm text-muted-foreground">reading memory...</p>
+              <p className="font-mono text-sm text-muted-foreground">
+                reading memory...
+              </p>
             )}
           </div>
         </div>
@@ -186,7 +253,8 @@ export function SystemMetrics() {
         {/* Storage */}
         <div className="border-t border-border p-4">
           <p className="mb-3 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            <HardDrive className="h-3.5 w-3.5 text-primary" />storage
+            <HardDrive className="h-3.5 w-3.5 text-primary" />
+            storage
           </p>
           {data && data.disk.length > 0 ? (
             <div className="grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-2">
@@ -209,20 +277,23 @@ export function SystemMetrics() {
         {/* Host info */}
         <div className="border-t border-border p-4">
           <p className="mb-3 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            <Server className="h-3.5 w-3.5 text-primary" />host
+            <Server className="h-3.5 w-3.5 text-primary" />
+            host
           </p>
           {data ? (
             <div className="grid grid-cols-1 gap-x-12 gap-y-2 sm:grid-cols-2">
               <Row k="hostname" v={data.hostname} />
               <Row k="platform" v={data.platform} />
-              <Row k="uptime"   v={formatUptime(data.uptime)} accent />
-              <Row k="cores"    v={String(data.cpu.cores)} />
+              <Row k="uptime" v={formatUptime(data.uptime)} accent />
+              <Row k="cores" v={String(data.cpu.cores)} />
             </div>
           ) : (
-            <p className="font-mono text-sm text-muted-foreground">reading host...</p>
+            <p className="font-mono text-sm text-muted-foreground">
+              reading host...
+            </p>
           )}
         </div>
       </div>
     </section>
-  )
+  );
 }
