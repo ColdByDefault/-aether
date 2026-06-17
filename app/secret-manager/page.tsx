@@ -1,4 +1,5 @@
-
+import { Toaster } from "@/components/ui/sonner"
+import { SecretManagerShell } from "@/components/secret-manager/secret-manager-shell"
 
 export default function SecretManagerPage() {
   return (
@@ -11,7 +12,8 @@ export default function SecretManagerPage() {
           aes-256-gcm encrypted · stored locally · never leaves your device
         </p>
       </header>
-      
+      <SecretManagerShell />
+      <Toaster />
     </main>
-  );
+  )
 }
