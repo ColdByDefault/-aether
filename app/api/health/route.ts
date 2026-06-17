@@ -48,20 +48,24 @@ function scanApiRoutes(apiDir: string, base = '/api'): RouteInfo[] {
 // The production image only ships the `.next` build output, not the `app/`
 // source tree, so filesystem scanning finds nothing there. The build's own
 // route manifest is present in both dev and prod and is the reliable source.
+// For each manifest entry we also try to read the corresponding source file so
+// method info is accurate even in production (source may still be on disk).
 function routesFromBuildManifest(): RouteInfo[] | null {
   const manifestPath = join(process.cwd(), '.next', 'app-path-routes-manifest.json');
   try {
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as Record<string, string>;
-    // Manifest has no method info — caller falls back to source scan for methods,
-    // but in prod the source isn't available, so we default to GET for static routes
-    // and mark dynamic ones so the card won't auto-test them.
     return Object.entries(manifest)
       .filter(([key, value]) => key.endsWith('/route') && value.startsWith('/api'))
-      .map(([, value]) => ({
-        path: value,
-        methods: ['GET'] as HttpMethod[],
-        dynamic: value.includes('['),
-      }));
+      .map(([key, value]) => {
+        // key = "/api/hermes/trigger/route" → source: "app/api/hermes/trigger/route.ts"
+        const relPath = 'app' + key + '.ts';
+        const srcPath = join(process.cwd(), relPath);
+        return {
+          path: value,
+          methods: methodsFromSource(srcPath),
+          dynamic: value.includes('['),
+        };
+      });
   } catch {
     return null;
   }

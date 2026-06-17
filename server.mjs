@@ -81,6 +81,7 @@ async function pollHardware(target) {
     if (target) {
       if (target.readyState === 1) target.send(JSON.stringify({ type: 'hardware', data }));
     } else {
+      bus.push('hardware', data);
       broadcast('hardware', data);
     }
   } catch {}
