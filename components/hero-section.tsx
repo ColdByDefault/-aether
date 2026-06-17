@@ -22,11 +22,11 @@ export function HeroSection() {
     <section className="relative overflow-hidden border border-border bg-card">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/background.png')", opacity: 0.12 }}
+        style={{ backgroundImage: "url('/background.png')", opacity: 0.35 }}
       />
       <div className="relative z-10 px-8 py-10 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted-foreground/60">
+          <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             aether · system monitoring daemon
           </p>
           <h1 className="font-mono text-3xl font-bold tracking-tight text-foreground md:text-4xl lg:text-5xl">
