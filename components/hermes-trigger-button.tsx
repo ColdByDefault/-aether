@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Play, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface Props {
   jobId: string;
@@ -46,13 +47,13 @@ export function HermesTriggerButton({ jobId }: Props) {
                         'text-muted-foreground/60 border-border/40 hover:border-border hover:text-muted-foreground';
 
   return (
-    <button
+    <Button
       onClick={trigger}
       disabled={state === 'loading'}
       className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10px] transition-colors disabled:pointer-events-none ${colorClass}`}
     >
       {icon}
       {label}
-    </button>
+    </Button>
   );
 }

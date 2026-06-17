@@ -1,50 +1,23 @@
-'use client';
+"use client"
 
-import { Zap } from 'lucide-react';
-import { useSystemDataContext } from '@/context/system-data-context';
-import type { PowerData } from '@/hooks/use-system-data';
+import { Zap } from "lucide-react"
+import type { BatteryInfo } from "@/app/api/power/route"
+import { formatTime, healthColor, meterColor, statusLabel, usePowerMetrics } from "./power-metrics.logic"
 
-import type { BatteryInfo } from '@/app/api/power/route';
-
-function meterColor(percent: number): string {
-  if (percent <= 10) return 'bg-destructive';
-  if (percent <= 25) return 'bg-chart-4';
-  return 'bg-primary';
-}
-
-function healthColor(percent: number): string {
-  if (percent < 60) return 'bg-destructive';
-  if (percent < 80) return 'bg-chart-4';
-  return 'bg-primary';
-}
-
-function formatTime(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
+// ─── Atoms ────────────────────────────────────────────────────────────────────
 
 function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
     <div className="flex items-baseline gap-3 font-mono text-sm">
       <span className="text-muted-foreground">{k}</span>
       <span className="flex-1 border-b border-dashed border-border/60" />
-      <span className={accent ? 'accent-text' : 'text-foreground'}>{v}</span>
+      <span className={accent ? "accent-text" : "text-foreground"}>{v}</span>
     </div>
-  );
-}
-
-function statusLabel(status: string, acOnline: boolean): { text: string; dot: string } {
-  const s = status.toLowerCase();
-  if (s === 'full') return { text: 'full', dot: 'bg-primary' };
-  if (s === 'charging') return { text: 'charging', dot: 'bg-chart-4' };
-  if (s === 'discharging') return { text: 'on battery', dot: 'bg-destructive' };
-  if (s === 'not charging') return { text: acOnline ? 'plugged in' : 'not charging', dot: 'bg-primary' };
-  return { text: s, dot: 'bg-muted-foreground' };
+  )
 }
 
 function BatteryCard({ bat, acOnline }: { bat: BatteryInfo; acOnline: boolean }) {
-  const { text: statusText, dot: statusDot } = statusLabel(bat.status, acOnline);
+  const { text: statusText, dot: statusDot } = statusLabel(bat.status, acOnline)
 
   return (
     <div className="space-y-4">
@@ -88,14 +61,10 @@ function BatteryCard({ bat, acOnline }: { bat: BatteryInfo; acOnline: boolean })
 
       {/* Stats grid */}
       <div className="space-y-2 pt-1">
-        <Row k="ac power" v={acOnline ? 'connected' : 'disconnected'} accent={acOnline} />
-        {bat.powerWatts > 0 && (
-          <Row k="draw" v={`${bat.powerWatts.toFixed(1)} W`} />
-        )}
+        <Row k="ac power" v={acOnline ? "connected" : "disconnected"} accent={acOnline} />
+        {bat.powerWatts > 0 && <Row k="draw" v={`${bat.powerWatts.toFixed(1)} W`} />}
         <Row k="voltage" v={`${bat.voltageNow.toFixed(3)} V`} />
-        {bat.currentNow !== 0 && (
-          <Row k="current" v={`${Math.abs(bat.currentNow).toFixed(0)} mA`} />
-        )}
+        {bat.currentNow !== 0 && <Row k="current" v={`${Math.abs(bat.currentNow).toFixed(0)} mA`} />}
         <Row k="technology" v={bat.technology} />
         <Row
           k="model"
@@ -103,15 +72,13 @@ function BatteryCard({ bat, acOnline }: { bat: BatteryInfo; acOnline: boolean })
         />
       </div>
     </div>
-  );
+  )
 }
 
-export function PowerMetrics() {
-  const { power: data, connected } = useSystemDataContext();
-  const loading = data === null;
-  const error = !connected && loading ? 'connecting...' : null;
+// ─── Main Component ───────────────────────────────────────────────────────────
 
-  const hasBatteries = data && data.batteries.length > 0;
+export function PowerMetrics() {
+  const { data, connected, loading, error, hasBatteries } = usePowerMetrics()
 
   return (
     <section id="power" className="scroll-mt-20">
@@ -120,8 +87,8 @@ export function PowerMetrics() {
         <span className="uppercase tracking-wider">Power</span>
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
-          <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
-          {!connected ? 'reconnecting...' : loading ? 'connecting...' : 'live · ws'}
+          <span className={`term-dot h-1.5 w-1.5 ${error ? "bg-destructive" : "bg-primary"}`} />
+          {!connected ? "reconnecting..." : loading ? "connecting..." : "live · ws"}
         </span>
       </div>
 
@@ -136,12 +103,12 @@ export function PowerMetrics() {
 
         {!loading && !error && !hasBatteries && (
           <div className="px-4 py-4 font-mono text-sm text-muted-foreground">
-            no battery detected · ac power {data?.acOnline ? 'connected' : 'disconnected'}
+            no battery detected · ac power {data?.acOnline ? "connected" : "disconnected"}
           </div>
         )}
 
-        {hasBatteries && (
-          <div className={`grid grid-cols-1 divide-y divide-border ${data.batteries.length > 1 ? 'md:grid-cols-2 md:divide-x md:divide-y-0' : ''}`}>
+        {hasBatteries && data && (
+          <div className={`grid grid-cols-1 divide-y divide-border ${data.batteries.length > 1 ? "md:grid-cols-2 md:divide-x md:divide-y-0" : ""}`}>
             {data.batteries.map((bat) => (
               <div key={bat.name} className="p-4">
                 {data.batteries.length > 1 && (
@@ -156,5 +123,5 @@ export function PowerMetrics() {
         )}
       </div>
     </section>
-  );
+  )
 }

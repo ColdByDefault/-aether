@@ -1,34 +1,11 @@
-'use client';
+"use client"
 
-import { Monitor, Cpu, MemoryStick, HardDrive, Server } from 'lucide-react';
-import { Sparkline } from '@/components/sparkline';
-import { useSystemDataContext } from '@/context/system-data-context';
+import { Monitor, Cpu, MemoryStick, HardDrive, Server } from "lucide-react"
+import { Sparkline } from "@/components/sparkline"
+import type { ProcessEntry } from "@/hooks/use-system-data"
+import { formatBytes, formatUptime, meterColor, useSystemMetrics } from "./system-metrics.logic"
 
-import type { MetricsData, ProcessEntry } from '@/hooks/use-system-data';
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
-}
-
-function formatUptime(seconds: number): string {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const parts: string[] = [];
-  if (days > 0) parts.push(`${days}d`);
-  if (hours > 0) parts.push(`${hours}h`);
-  parts.push(`${mins}m`);
-  return parts.join(' ');
-}
-
-function meterColor(percent: number): string {
-  if (percent >= 90) return 'bg-destructive';
-  if (percent >= 70) return 'bg-chart-4';
-  return 'bg-primary';
-}
+// ─── Atoms ────────────────────────────────────────────────────────────────────
 
 function Meter({ label, percent, detail }: { label: string; percent: number; detail: string }) {
   return (
@@ -45,7 +22,7 @@ function Meter({ label, percent, detail }: { label: string; percent: number; det
       </div>
       <p className="mt-1.5 text-xs text-muted-foreground/70">{detail}</p>
     </div>
-  );
+  )
 }
 
 function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
@@ -53,9 +30,9 @@ function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
     <div className="flex items-baseline gap-3 font-mono text-sm">
       <span className="text-muted-foreground">{k}</span>
       <span className="flex-1 border-b border-dashed border-border/60" />
-      <span className={accent ? 'accent-text' : 'text-foreground'}>{v}</span>
+      <span className={accent ? "accent-text" : "text-foreground"}>{v}</span>
     </div>
-  );
+  )
 }
 
 function ProcessList({
@@ -63,17 +40,15 @@ function ProcessList({
   sortBy,
   label,
 }: {
-  procs: ProcessEntry[];
-  sortBy: 'cpu' | 'mem';
-  label: string;
+  procs: ProcessEntry[]
+  sortBy: "cpu" | "mem"
+  label: string
 }) {
   const sorted = [...procs]
-    .sort((a, b) => sortBy === 'cpu' ? b.cpuPercent - a.cpuPercent : b.memPercent - a.memPercent)
-    .slice(0, 6);
+    .sort((a, b) => (sortBy === "cpu" ? b.cpuPercent - a.cpuPercent : b.memPercent - a.memPercent))
+    .slice(0, 6)
 
-  const maxVal = sorted[0]
-    ? (sortBy === 'cpu' ? sorted[0].cpuPercent : sorted[0].memPercent)
-    : 1;
+  const maxVal = sorted[0] ? (sortBy === "cpu" ? sorted[0].cpuPercent : sorted[0].memPercent) : 1
 
   return (
     <div className="mt-4 space-y-0.5">
@@ -81,12 +56,10 @@ function ProcessList({
         {label}
       </p>
       {sorted.map((p) => {
-        const val = sortBy === 'cpu' ? p.cpuPercent : p.memPercent;
-        const barWidth = maxVal > 0 ? (val / maxVal) * 100 : 0;
-        const displayName = p.name.length > 18 ? p.name.slice(0, 17) + '…' : p.name;
-        const secondary = sortBy === 'cpu'
-          ? formatBytes(p.memRss)
-          : `${p.cpuPercent.toFixed(1)}% cpu`;
+        const val         = sortBy === "cpu" ? p.cpuPercent : p.memPercent
+        const barWidth    = maxVal > 0 ? (val / maxVal) * 100 : 0
+        const displayName = p.name.length > 18 ? p.name.slice(0, 17) + "…" : p.name
+        const secondary   = sortBy === "cpu" ? formatBytes(p.memRss) : `${p.cpuPercent.toFixed(1)}% cpu`
         return (
           <div key={p.pid} className="group font-mono text-xs">
             <div className="flex items-center justify-between gap-2">
@@ -107,19 +80,19 @@ function ProcessList({
               </span>
             </div>
           </div>
-        );
+        )
       })}
       {sorted.length === 0 && (
         <p className="font-mono text-xs text-muted-foreground/50">no data yet</p>
       )}
     </div>
-  );
+  )
 }
 
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export function SystemMetrics() {
-  const { metrics: data, processes: procs, connected } = useSystemDataContext();
-  const loading = data === null;
-  const error = !connected && loading ? 'connecting...' : null;
+  const { data, procs, connected, loading, error } = useSystemMetrics()
 
   return (
     <section id="system" className="scroll-mt-20 h-full flex flex-col">
@@ -128,8 +101,8 @@ export function SystemMetrics() {
         <span className="uppercase tracking-wider">System Overview</span>
         <span className="flex-1 border-t border-border" />
         <span className="inline-flex items-center gap-1.5">
-          <span className={`term-dot ${error ? 'bg-destructive' : 'bg-primary'} h-1.5 w-1.5`} />
-          {!connected ? 'reconnecting...' : loading ? 'connecting...' : 'live · ws'}
+          <span className={`term-dot ${error ? "bg-destructive" : "bg-primary"} h-1.5 w-1.5`} />
+          {!connected ? "reconnecting..." : loading ? "connecting..." : "live · ws"}
         </span>
       </div>
 
@@ -151,7 +124,7 @@ export function SystemMetrics() {
                 <Meter
                   label="usage"
                   percent={data.cpu.usedPercent}
-                  detail={`${data.cpu.cores} cores · load ${data.cpu.loadAvg.map((n) => n.toFixed(2)).join(' ')}`}
+                  detail={`${data.cpu.cores} cores · load ${data.cpu.loadAvg.map((n) => n.toFixed(2)).join(" ")}`}
                 />
                 <div className="h-10">
                   {(data.history?.length ?? 0) > 1 && (
@@ -168,9 +141,7 @@ export function SystemMetrics() {
                 <p className="truncate font-mono text-xs text-muted-foreground/70" title={data.cpu.model}>
                   {data.cpu.model}
                 </p>
-                {procs.length > 0 && (
-                  <ProcessList procs={procs} sortBy="cpu" label="top by cpu" />
-                )}
+                {procs.length > 0 && <ProcessList procs={procs} sortBy="cpu" label="top by cpu" />}
               </div>
             ) : (
               <p className="font-mono text-sm text-muted-foreground">reading core...</p>
@@ -201,9 +172,7 @@ export function SystemMetrics() {
                     </>
                   )}
                 </div>
-                {procs.length > 0 && (
-                  <ProcessList procs={procs} sortBy="mem" label="top by memory" />
-                )}
+                {procs.length > 0 && <ProcessList procs={procs} sortBy="mem" label="top by memory" />}
               </div>
             ) : (
               <p className="font-mono text-sm text-muted-foreground">reading memory...</p>
@@ -229,7 +198,7 @@ export function SystemMetrics() {
             </div>
           ) : (
             <p className="font-mono text-sm text-muted-foreground">
-              {loading ? 'reading volumes...' : 'no storage data'}
+              {loading ? "reading volumes..." : "no storage data"}
             </p>
           )}
         </div>
@@ -243,8 +212,8 @@ export function SystemMetrics() {
             <div className="grid grid-cols-1 gap-x-12 gap-y-2 sm:grid-cols-2">
               <Row k="hostname" v={data.hostname} />
               <Row k="platform" v={data.platform} />
-              <Row k="uptime" v={formatUptime(data.uptime)} accent />
-              <Row k="cores" v={String(data.cpu.cores)} />
+              <Row k="uptime"   v={formatUptime(data.uptime)} accent />
+              <Row k="cores"    v={String(data.cpu.cores)} />
             </div>
           ) : (
             <p className="font-mono text-sm text-muted-foreground">reading host...</p>
@@ -252,5 +221,5 @@ export function SystemMetrics() {
         </div>
       </div>
     </section>
-  );
+  )
 }

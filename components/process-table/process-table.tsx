@@ -1,63 +1,11 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { Cpu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-interface ProcessEntry {
-  pid: number;
-  name: string;
-  cmdline: string;
-  cpuPercent: number;
-  memRss: number;
-  memPercent: number;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
-
-type SortKey = 'cpu' | 'mem';
+import { Cpu } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { formatBytes, useProcessTable } from "./process-table.logic"
 
 export function ProcessTable() {
-  const [procs, setProcs] = useState<ProcessEntry[]>([]);
-  const [sort, setSort] = useState<SortKey>('cpu');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/processes');
-        if (!res.ok) throw new Error('fetch failed');
-        const data: unknown = await res.json();
-        if (!active) return;
-        if (Array.isArray(data)) setProcs(data as ProcessEntry[]);
-        setError(null);
-        setLoading(false);
-      } catch (e) {
-        if (!active) return;
-        setError(e instanceof Error ? e.message : 'error');
-        setLoading(false);
-      }
-    };
-
-    poll();
-    const interval = setInterval(poll, 15_000);
-    return () => { active = false; clearInterval(interval); };
-  }, []);
-
-  const sorted = [...procs]
-    .sort((a, b) => sort === 'cpu' ? b.cpuPercent - a.cpuPercent : b.memPercent - a.memPercent)
-    .slice(0, 15);
-
-  const maxVal = sorted[0]
-    ? (sort === 'cpu' ? sorted[0].cpuPercent : sorted[0].memPercent)
-    : 1;
+  const { procs, sorted, maxVal, sort, setSort, error, loading } = useProcessTable()
 
   return (
     <section id="processes" className="scroll-mt-20">
@@ -70,8 +18,8 @@ export function ProcessTable() {
           <Button
             variant="ghost"
             size="xs"
-            onClick={() => setSort('cpu')}
-            className={`font-mono ${sort === 'cpu' ? 'text-primary' : 'text-muted-foreground/60'}`}
+            onClick={() => setSort("cpu")}
+            className={`font-mono ${sort === "cpu" ? "text-primary" : "text-muted-foreground/60"}`}
           >
             cpu
           </Button>
@@ -79,15 +27,15 @@ export function ProcessTable() {
           <Button
             variant="ghost"
             size="xs"
-            onClick={() => setSort('mem')}
-            className={`font-mono ${sort === 'mem' ? 'text-primary' : 'text-muted-foreground/60'}`}
+            onClick={() => setSort("mem")}
+            className={`font-mono ${sort === "mem" ? "text-primary" : "text-muted-foreground/60"}`}
           >
             mem
           </Button>
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className={`term-dot h-1.5 w-1.5 ${error ? 'bg-destructive' : 'bg-primary'}`} />
-          {error ? 'error' : loading ? 'polling' : 'live · 15s'}
+          <span className={`term-dot h-1.5 w-1.5 ${error ? "bg-destructive" : "bg-primary"}`} />
+          {error ? "error" : loading ? "polling" : "live · 15s"}
         </span>
       </div>
 
@@ -111,8 +59,8 @@ export function ProcessTable() {
             <div className="px-4 py-3 font-mono text-sm text-destructive">ERR: {error}</div>
           )}
           {sorted.map((p) => {
-            const val = sort === 'cpu' ? p.cpuPercent : p.memPercent;
-            const barWidth = maxVal > 0 ? (val / maxVal) * 100 : 0;
+            const val = sort === "cpu" ? p.cpuPercent : p.memPercent
+            const barWidth = maxVal > 0 ? (val / maxVal) * 100 : 0
             return (
               <div
                 key={p.pid}
@@ -134,7 +82,7 @@ export function ProcessTable() {
                   <span className="text-right tabular-nums text-muted-foreground/70">{p.memPercent.toFixed(1)}%</span>
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -145,5 +93,5 @@ export function ProcessTable() {
         )}
       </div>
     </section>
-  );
+  )
 }
