@@ -155,6 +155,7 @@ function RouteRow({
   const { route, method, supportedMethods, dynamic, status, httpStatus, latency, error, responseBody, testedAt } = result
   const isLoading = status === "loading"
   const hasTested = status === "ok" || status === "error"
+  const canAutoTest = method === "GET" && !dynamic
 
   return (
     <div className="flex items-center gap-2 px-4 py-2.5 hover:bg-muted/40 transition-colors group">
@@ -217,17 +218,30 @@ function RouteRow({
         </Button>
       )}
 
-      <Button
-        size="sm"
-        variant="ghost"
-        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2 shrink-0"
-        disabled={isLoading}
-        onClick={() => onTest(route, method)}
-        aria-label={`Test ${method} ${route}`}
-      >
-        <Zap className={cn(isLoading && "animate-spin")} />
-        {isLoading ? "Testing…" : "Test"}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger>
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2"
+              disabled={isLoading || !canAutoTest}
+              onClick={() => onTest(route, method)}
+              aria-label={`Test ${method} ${route}`}
+            >
+              <Zap className={cn(isLoading && "animate-spin")} />
+              {isLoading ? "Testing…" : "Test"}
+            </Button>
+          </span>
+        </TooltipTrigger>
+        {!canAutoTest && (
+          <TooltipContent side="left" className="max-w-xs">
+            <p className="text-xs">
+              {dynamic ? "Needs a real ID — can't auto-test dynamic routes." : "Needs a request body — can't auto-test write routes."}
+            </p>
+          </TooltipContent>
+        )}
+      </Tooltip>
     </div>
   )
 }
@@ -351,9 +365,10 @@ export function ApiHealthCard({
     setGlobalLoading(false)
   }, [routes, healthEndpoint])
 
-  const okCount     = routes.filter((r) => r.status === "ok").length
-  const errorCount  = routes.filter((r) => r.status === "error").length
-  const testedCount = okCount + errorCount
+  const okCount       = routes.filter((r) => r.status === "ok").length
+  const errorCount    = routes.filter((r) => r.status === "error").length
+  const testedCount   = okCount + errorCount
+  const autoTestCount = routes.filter((r) => !r.dynamic && r.method === "GET").length
 
   const summary = scanning
     ? "scanning routes…"
@@ -380,7 +395,7 @@ export function ApiHealthCard({
             onClick={testAll}
           >
             <RefreshCw className={cn("h-3 w-3", globalLoading && "animate-spin")} />
-            {globalLoading ? "testing…" : "test all"}
+            {globalLoading ? "testing…" : `test all${autoTestCount < routes.length ? ` (${autoTestCount})` : ""}`}
           </Button>
           <CollapsibleTrigger className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer">
             <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
