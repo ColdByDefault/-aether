@@ -8,6 +8,7 @@ import { UploadZone } from "./upload-zone"
 import { DocumentCard } from "./document-card"
 import { FolderCard } from "./folder-card"
 import { PdfViewer } from "./pdf-viewer"
+import { MarkdownViewer } from "./markdown-viewer"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import {
@@ -232,7 +233,7 @@ export function LibraryShell() {
           ? "No documents match your search."
           : currentFolder
             ? "This folder is empty."
-            : "No documents yet. Upload a PDF to get started."
+            : "No documents yet. Upload a PDF or Markdown file to get started."
 
   return (
     <>
@@ -439,7 +440,14 @@ export function LibraryShell() {
         </DialogContent>
       </Dialog>
 
-      <PdfViewer doc={activeDoc} onClose={() => setActiveDoc(null)} />
+      <PdfViewer
+        doc={activeDoc?.name.toLowerCase().endsWith(".pdf") ? activeDoc : null}
+        onClose={() => setActiveDoc(null)}
+      />
+      <MarkdownViewer
+        doc={activeDoc?.name.toLowerCase().endsWith(".md") ? activeDoc : null}
+        onClose={() => setActiveDoc(null)}
+      />
     </>
   )
 }

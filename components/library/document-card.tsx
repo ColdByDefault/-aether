@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, type MouseEvent } from "react"
-import { FileText, BookOpen, Star, EyeOff, Eye, Trash2, Check, Folder as FolderIcon, FolderMinus } from "lucide-react"
+import { FileText, FileCode2, BookOpen, Star, EyeOff, Eye, Trash2, Check, Folder as FolderIcon, FolderMinus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   ContextMenu,
@@ -56,6 +56,8 @@ export function DocumentCard({
   onToggleSelect,
 }: DocumentCardProps) {
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMarkdown = doc.name.toLowerCase().endsWith(".md")
+  const isPdf = doc.name.toLowerCase().endsWith(".pdf")
 
   const handleClick = (e: MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || selectionActive) {
@@ -122,7 +124,9 @@ export function DocumentCard({
               <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 rounded bg-border" />
               <div className="absolute inset-0 translate-x-0.5 translate-y-0.5 rounded bg-muted" />
               <div className="relative flex items-center justify-center size-14 rounded bg-card border border-border shadow-sm">
-                <FileText className="size-6 text-primary" />
+                {isMarkdown
+                  ? <FileCode2 className="size-6 text-blue-500" />
+                  : <FileText className="size-6 text-primary" />}
               </div>
             </div>
 
@@ -147,9 +151,19 @@ export function DocumentCard({
               className="text-xs font-medium text-foreground leading-snug truncate"
               title={doc.name}
             >
-              {doc.name.replace(/\.pdf$/i, "")}
+              {doc.name.replace(/\.(pdf|md)$/i, "")}
             </p>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {isPdf && (
+                <Badge className="text-xs font-semibold px-1.5 py-0 bg-rose-500/15 text-rose-600 border-rose-500/30 dark:text-rose-400 hover:bg-rose-500/15">
+                  PDF
+                </Badge>
+              )}
+              {isMarkdown && (
+                <Badge className="text-xs font-semibold px-1.5 py-0 bg-blue-500/15 text-blue-600 border-blue-500/30 dark:text-blue-400 hover:bg-blue-500/15">
+                  MD
+                </Badge>
+              )}
               <Badge
                 variant="secondary"
                 className="text-xs font-normal px-1.5 py-0"

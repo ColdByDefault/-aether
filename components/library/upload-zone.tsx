@@ -19,10 +19,11 @@ export function UploadZone({ onFiles, disabled }: UploadZoneProps) {
       e.preventDefault()
       setDragging(false)
       if (disabled) return
-      const pdfs = Array.from(e.dataTransfer.files).filter((f) =>
-        f.name.toLowerCase().endsWith(".pdf"),
-      )
-      if (pdfs.length) onFiles(pdfs)
+      const accepted = Array.from(e.dataTransfer.files).filter((f) => {
+        const name = f.name.toLowerCase()
+        return name.endsWith(".pdf") || name.endsWith(".md")
+      })
+      if (accepted.length) onFiles(accepted)
     },
     [onFiles, disabled],
   )
@@ -52,7 +53,7 @@ export function UploadZone({ onFiles, disabled }: UploadZoneProps) {
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,application/pdf"
+        accept=".pdf,application/pdf,.md,text/markdown"
         multiple
         className="sr-only"
         onChange={handleChange}
@@ -66,10 +67,10 @@ export function UploadZone({ onFiles, disabled }: UploadZoneProps) {
         </div>
         <div>
           <p className="text-sm font-medium text-foreground leading-tight">
-            Upload PDFs
+            Upload files
           </p>
           <p className="text-xs text-muted-foreground leading-tight">
-            Books, articles &amp; papers
+            PDF books &amp; Markdown documents
           </p>
         </div>
       </div>
@@ -79,7 +80,7 @@ export function UploadZone({ onFiles, disabled }: UploadZoneProps) {
         variant="outline"
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
-        aria-label="Select PDF files to upload"
+        aria-label="Select PDF or Markdown files to upload"
       >
         <Upload data-icon="inline-start" />
         Select files

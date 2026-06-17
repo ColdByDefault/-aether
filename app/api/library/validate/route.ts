@@ -10,9 +10,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
   }
 
-  if (!body.name.toLowerCase().endsWith(".pdf")) {
+  const nameLower = body.name.toLowerCase()
+  if (!nameLower.endsWith(".pdf") && !nameLower.endsWith(".md")) {
     return NextResponse.json(
-      { error: "Only PDF files are accepted." },
+      { error: "Only PDF and Markdown (.md) files are accepted." },
       { status: 422 },
     )
   }

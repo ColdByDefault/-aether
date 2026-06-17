@@ -28,9 +28,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 })
   }
 
-  if (!file.name.toLowerCase().endsWith(".pdf")) {
+  const fileNameLower = file.name.toLowerCase()
+  if (!fileNameLower.endsWith(".pdf") && !fileNameLower.endsWith(".md")) {
     return NextResponse.json(
-      { error: "Only PDF files are accepted." },
+      { error: "Only PDF and Markdown (.md) files are accepted." },
       { status: 422 },
     )
   }

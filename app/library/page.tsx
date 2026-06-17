@@ -5,7 +5,7 @@ import { LibraryShell } from "@/components/library/library-shell"
 
 export const metadata: Metadata = {
   title: "Library",
-  description: "Upload and read your PDF books and articles.",
+  description: "Upload and read your PDF books, articles, and Markdown documents.",
 }
 
 export default function LibraryPage() {
@@ -18,8 +18,8 @@ export default function LibraryPage() {
               Library
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Upload PDF books and articles, then read them directly in the
-              browser.
+              Upload PDF books, articles, and Markdown documents — read them
+              directly in the browser.
             </p>
           </header>
           <LibraryShell />

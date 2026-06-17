@@ -16,10 +16,12 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
   const safeName = document.name.replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "")
   const encodedName = encodeURIComponent(document.name)
+  const isMarkdown = document.name.toLowerCase().endsWith(".md")
+  const contentType = isMarkdown ? "text/markdown; charset=utf-8" : "application/pdf"
 
   return new NextResponse(Buffer.from(document.data), {
     headers: {
-      "Content-Type": "application/pdf",
+      "Content-Type": contentType,
       "Content-Disposition": `inline; filename="${safeName}"; filename*=UTF-8''${encodedName}`,
     },
   })
