@@ -8,6 +8,10 @@ export interface LibraryDocument {
   folderId: string | null
 }
 
+export interface SearchResult extends LibraryDocument {
+  contentHeadline: string | null
+}
+
 export interface LibraryFolder {
   id: string
   name: string

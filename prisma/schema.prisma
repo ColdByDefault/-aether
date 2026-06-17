@@ -18,6 +18,7 @@ model Document {
   name       String
   size       Int
   data       Bytes
+  content    String?
   starred    Boolean  @default(false)
   hidden     Boolean  @default(false)
   uploadedAt DateTime @default(now())

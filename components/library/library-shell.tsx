@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { BookOpen, ChevronRight, EyeOff, FolderPlus, Search, Star, Trash2, X } from "lucide-react"
 import { useLibrary } from "@/lib/library/use-library"
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { mapWithConcurrency } from "@/lib/library/concurrency"
-import type { LibraryDocument, LibraryFolder } from "@/lib/library/types"
+import type { LibraryDocument, LibraryFolder, SearchResult } from "@/lib/library/types"
 
 type FilterMode = "all" | "starred" | "hidden"
 const UPLOAD_CONCURRENCY = 4
@@ -54,14 +54,41 @@ export function LibraryShell() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (filter !== "all") setCurrentFolderId(null)
   }, [filter])
 
+  const isSearching = query.trim().length > 0
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!isSearching) {
+      setSearchResults([])
+      setSearchLoading(false)
+      return
+    }
+    setSearchLoading(true)
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/library/search?q=${encodeURIComponent(query.trim())}`)
+        const data = await res.json()
+        setSearchResults(data.results ?? [])
+      } catch {
+        setSearchResults([])
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 300)
+  }, [query, isSearching])
+
   const inFolderView = filter === "all"
   const currentFolder = folders.find((f) => f.id === currentFolderId) ?? null
 
+  // When not searching, show folder-scoped documents
   const scopedDocuments = inFolderView
     ? documents.filter(
         (d) =>
@@ -69,13 +96,11 @@ export function LibraryShell() {
       )
     : documents.filter((d) => (filter === "starred" ? d.starred && !d.hidden : d.hidden))
 
-  const filtered = scopedDocuments.filter((d) =>
-    d.name.toLowerCase().includes(query.toLowerCase()),
-  )
+  const filtered = isSearching ? searchResults : scopedDocuments
 
   const visibleFolders =
-    inFolderView && currentFolderId === null
-      ? folders.filter((f) => f.name.toLowerCase().includes(query.toLowerCase()))
+    inFolderView && currentFolderId === null && !isSearching
+      ? folders
       : []
 
   const uploadOne = async (file: File): Promise<{ name: string; error?: string }> => {
@@ -229,8 +254,8 @@ export function LibraryShell() {
       ? "No starred documents yet. Right-click a file to star it."
       : filter === "hidden"
         ? "No hidden documents."
-        : query
-          ? "No documents match your search."
+        : isSearching
+          ? "No files match your search."
           : currentFolder
             ? "This folder is empty."
             : "No documents yet. Upload a PDF or Markdown file to get started."
@@ -373,7 +398,7 @@ export function LibraryShell() {
         )}
 
         {/* Grid */}
-        {isLoading ? (
+        {isLoading || (isSearching && searchLoading) ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-48 rounded-lg" />
@@ -395,21 +420,27 @@ export function LibraryShell() {
                 onDelete={handleDeleteFolder}
               />
             ))}
-            {filtered.map((doc) => (
-              <DocumentCard
-                key={doc.id}
-                doc={doc}
-                folders={folders}
-                onOpen={setActiveDoc}
-                onDelete={handleDelete}
-                onToggleStar={handleToggleStar}
-                onToggleHide={handleToggleHide}
-                onMoveToFolder={handleMoveToFolder}
-                selected={selectedIds.has(doc.id)}
-                selectionActive={selectedIds.size > 0}
-                onToggleSelect={handleToggleSelect}
-              />
-            ))}
+            {filtered.map((doc) => {
+              const sr = isSearching ? (doc as SearchResult) : null
+              return (
+                <DocumentCard
+                  key={doc.id}
+                  doc={doc}
+                  folders={folders}
+                  onOpen={setActiveDoc}
+                  onDelete={handleDelete}
+                  onToggleStar={handleToggleStar}
+                  onToggleHide={handleToggleHide}
+                  onMoveToFolder={handleMoveToFolder}
+                  selected={selectedIds.has(doc.id)}
+                  selectionActive={selectedIds.size > 0}
+                  onToggleSelect={handleToggleSelect}
+                  folderName={isSearching && doc.folderId ? folders.find((f) => f.id === doc.folderId)?.name : undefined}
+                  searchQuery={isSearching ? query.trim() : undefined}
+                  contentHeadline={sr?.contentHeadline ?? undefined}
+                />
+              )
+            })}
           </div>
         )}
       </div>

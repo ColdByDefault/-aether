@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { extractText } from "@/lib/library/extract-text"
 
 const MAX_SIZE_MB = 50
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
@@ -45,12 +46,14 @@ export async function POST(req: NextRequest) {
 
   const data = Buffer.from(await file.arrayBuffer())
   const folderId = formData?.get("folderId")
+  const content = await extractText(data, file.name)
 
   const document = await prisma.document.create({
     data: {
       name: file.name,
       size: file.size,
       data,
+      content: content || null,
       ...(typeof folderId === "string" && folderId ? { folderId } : {}),
     },
     select: {

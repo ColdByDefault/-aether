@@ -27,6 +27,25 @@ interface DocumentCardProps {
   selected: boolean
   selectionActive: boolean
   onToggleSelect: (id: string) => void
+  folderName?: string
+  searchQuery?: string
+  contentHeadline?: string
+}
+
+function HighlightedName({ name, query }: { name: string; query?: string }) {
+  const display = name.replace(/\.(pdf|md)$/i, "")
+  if (!query) return <>{display}</>
+  const idx = display.toLowerCase().indexOf(query.toLowerCase())
+  if (idx === -1) return <>{display}</>
+  return (
+    <>
+      {display.slice(0, idx)}
+      <mark className="bg-amber-200 dark:bg-amber-500/40 rounded-sm px-px not-italic">
+        {display.slice(idx, idx + query.length)}
+      </mark>
+      {display.slice(idx + query.length)}
+    </>
+  )
 }
 
 function formatBytes(bytes: number): string {
@@ -54,6 +73,9 @@ export function DocumentCard({
   selected,
   selectionActive,
   onToggleSelect,
+  folderName,
+  searchQuery,
+  contentHeadline,
 }: DocumentCardProps) {
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMarkdown = doc.name.toLowerCase().endsWith(".md")
@@ -147,11 +169,8 @@ export function DocumentCard({
 
           {/* Footer */}
           <div className="px-3 py-2.5 border-t border-border bg-card">
-            <p
-              className="text-xs font-medium text-foreground leading-snug truncate"
-              title={doc.name}
-            >
-              {doc.name.replace(/\.(pdf|md)$/i, "")}
+            <p className="text-xs font-medium text-foreground leading-snug truncate" title={doc.name}>
+              <HighlightedName name={doc.name} query={searchQuery} />
             </p>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               {isPdf && (
@@ -174,6 +193,18 @@ export function DocumentCard({
                 {formatDate(doc.uploadedAt)}
               </span>
             </div>
+            {contentHeadline && (
+              <p
+                className="text-xs text-muted-foreground mt-1.5 leading-relaxed line-clamp-3 [&_mark]:bg-amber-200 [&_mark]:dark:bg-amber-500/40 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-px [&_mark]:not-italic"
+                dangerouslySetInnerHTML={{ __html: contentHeadline }}
+              />
+            )}
+            {folderName && (
+              <div className="flex items-center gap-1 mt-1">
+                <FolderIcon className="size-3 text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground truncate">{folderName}</span>
+              </div>
+            )}
           </div>
         </article>
       </ContextMenuTrigger>
