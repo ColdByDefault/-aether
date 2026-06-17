@@ -24,13 +24,16 @@ export function HeroSection() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/background.png')", opacity: 0.12 }}
       />
-      <div className="relative z-10 px-6 py-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="relative z-10 px-8 py-10 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <h1 className="font-mono text-xl font-bold tracking-tight text-foreground md:text-2xl">
-            aether{' '}
-            <span className="text-muted-foreground font-normal">— system monitoring daemon</span>
+          <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted-foreground/60">
+            aether · system monitoring daemon
+          </p>
+          <h1 className="font-mono text-3xl font-bold tracking-tight text-foreground md:text-4xl lg:text-5xl">
+            server{' '}
+            <span className="text-primary">dashboard</span>
           </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="gap-1.5 font-mono text-xs font-normal text-muted-foreground bg-muted/40 h-auto py-1 rounded-sm">
               <span className={`term-dot h-1.5 w-1.5 ${connected ? 'bg-green-500' : 'bg-destructive'}`} />
               {connected ? 'online' : 'offline'}

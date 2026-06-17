@@ -1,16 +1,15 @@
 'use client';
 
-import { Monitor, Zap, Activity, Bot, TerminalSquare, SquareLibrary, Container } from 'lucide-react';
+import { Monitor, Network, ScrollText, TerminalSquare, SquareLibrary, Container } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const NAV = [
-  { id: '/#system',   label: 'System',   Icon: Monitor        },
-  { id: '/#power',    label: 'Power',    Icon: Zap            },
-  { id: '/#events',   label: 'Events',   Icon: Activity       },
-  { id: '/#ai',       label: 'AI',       Icon: Bot            },
-  { id: '/terminal', label: 'Terminal', Icon: TerminalSquare },
-  { id: '/library', label: 'Library', Icon: SquareLibrary  },
+  { id: '/system',      label: 'System',      Icon: Monitor        },
+  { id: '/api-network', label: 'API & Network', Icon: Network       },
+  { id: '/logs',        label: 'Logs',        Icon: ScrollText     },
+  { id: '/terminal',    label: 'Terminal',    Icon: TerminalSquare },
+  { id: '/library',     label: 'Library',     Icon: SquareLibrary  },
 ];
 
 export function Navbar() {
