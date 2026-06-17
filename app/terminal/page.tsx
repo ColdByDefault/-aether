@@ -9,7 +9,7 @@ type Status = 'connecting' | 'connected' | 'disconnected' | 'error';
 export default function TerminalPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>('connecting');
-  const [sessionCount, setSessionCount] = useState(0);
+  const [, setSessionCount] = useState(0);
 
   const startSession = useCallback(async () => {
     if (!containerRef.current) return;
@@ -104,7 +104,7 @@ export default function TerminalPage() {
       ws.close();
       term.dispose();
     };
-  }, [sessionCount]);
+  }, []);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;

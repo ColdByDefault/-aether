@@ -1,12 +1,7 @@
-import type { Metadata } from 'next';
 import { ServiceProbe } from '@/components/service-probe';
 import { ApiHealthCard } from '@/components/api-health-card';
 import { OpenPorts } from '@/components/open-ports';
 
-export const metadata: Metadata = {
-  title: 'API & Network — aether',
-  description: 'Service probe, API health checks, and open ports.',
-};
 
 export default function ApiNetworkPage() {
   return (

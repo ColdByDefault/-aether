@@ -1,13 +1,8 @@
-import type { Metadata } from 'next';
 import { SystemMetrics } from '@/components/system-metrics';
 import { CpuTemp } from '@/components/cpu-temp';
 import { SwapUsage } from '@/components/swap-usage';
 import { PowerMetrics } from '@/components/power-metrics';
 
-export const metadata: Metadata = {
-  title: 'System — aether',
-  description: 'System overview, CPU temperature, swap usage, and power metrics.',
-};
 
 export default function SystemPage() {
   return (

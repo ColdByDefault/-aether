@@ -1,11 +1,6 @@
-import type { Metadata } from 'next';
 import { AiAnalysis } from '@/components/ai-analysis';
 import { EventFeed } from '@/components/event-feed';
 
-export const metadata: Metadata = {
-  title: 'Logs — aether',
-  description: 'AI health analysis and recent system events.',
-};
 
 export default function LogsPage() {
   return (

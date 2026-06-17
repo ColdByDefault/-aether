@@ -1,12 +1,7 @@
-import type { Metadata } from "next"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { LibraryShell } from "@/components/library/library-shell"
 
-export const metadata: Metadata = {
-  title: "Library",
-  description: "Upload and read your PDF books, articles, and Markdown documents.",
-}
 
 export default function LibraryPage() {
   return (
