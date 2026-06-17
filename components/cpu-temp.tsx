@@ -3,6 +3,7 @@
 import { Thermometer } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useSystemDataContext } from '@/context/system-data-context';
+import { HistorySparkline } from '@/components/history-sparkline';
 
 const TEMP_MAX = 100;
 
@@ -73,6 +74,20 @@ export function CpuTemp() {
             </div>
           ))}
         </div>
+
+        {zones.length > 0 && (
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="mb-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground/60">
+              avg temp · 24h
+            </p>
+            <HistorySparkline
+              metric="tempC"
+              pct={zones.reduce((s, z) => s + z.celsius, 0) / zones.length}
+              maxVal={100}
+              height={28}
+            />
+          </div>
+        )}
 
         {data && (
           <p className="mt-4 font-mono text-[10px] text-muted-foreground/30">

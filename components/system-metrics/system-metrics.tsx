@@ -2,6 +2,7 @@
 
 import { Monitor, Cpu, MemoryStick, HardDrive, Server } from "lucide-react"
 import { Sparkline } from "@/components/sparkline"
+import { HistorySparkline } from "@/components/history-sparkline"
 import type { ProcessEntry } from "@/hooks/use-system-data"
 import { formatBytes, formatUptime, meterColor, useSystemMetrics } from "./system-metrics.logic"
 
@@ -138,6 +139,7 @@ export function SystemMetrics() {
                     </>
                   )}
                 </div>
+                <HistorySparkline metric="cpuPct" pct={data.cpu.usedPercent} height={28} />
                 <p className="truncate font-mono text-xs text-muted-foreground/70" title={data.cpu.model}>
                   {data.cpu.model}
                 </p>
@@ -172,6 +174,7 @@ export function SystemMetrics() {
                     </>
                   )}
                 </div>
+                <HistorySparkline metric="memPct" pct={data.memory.usedPercent} height={28} />
                 {procs.length > 0 && <ProcessList procs={procs} sortBy="mem" label="top by memory" />}
               </div>
             ) : (

@@ -31,3 +31,16 @@ model Folder {
   createdAt DateTime   @default(now())
   documents Document[]
 }
+
+model SystemSnapshot {
+  id         Int      @id @default(autoincrement())
+  capturedAt DateTime @default(now())
+  cpuPct     Float
+  memPct     Float
+  swapPct    Float?
+  tempC      Float?
+  powerW     Float?
+  batteryPct Float?
+
+  @@index([capturedAt])
+}

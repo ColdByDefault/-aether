@@ -3,6 +3,7 @@
 import { Zap } from "lucide-react"
 import type { BatteryInfo } from "@/app/api/power/route"
 import { formatTime, healthColor, meterColor, statusLabel, usePowerMetrics } from "./power-metrics.logic"
+import { HistorySparkline } from "@/components/history-sparkline"
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,20 @@ function BatteryCard({ bat, acOnline }: { bat: BatteryInfo; acOnline: boolean })
         <p className="mt-1.5 font-mono text-xs text-muted-foreground/70">
           {bat.chargeFull.toFixed(0)} mAh / {bat.chargeFullDesign.toFixed(0)} mAh design · {bat.cycleCount} cycles
         </p>
+      </div>
+
+      {/* 24h history sparklines */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="mb-1 font-mono text-xs uppercase tracking-wider text-muted-foreground/60">capacity · 24h</p>
+          <HistorySparkline metric="batteryPct" pct={bat.capacity} height={24} />
+        </div>
+        {bat.powerWatts > 0 && (
+          <div>
+            <p className="mb-1 font-mono text-xs uppercase tracking-wider text-muted-foreground/60">draw · 24h</p>
+            <HistorySparkline metric="powerW" pct={Math.min(100, bat.powerWatts * 4)} height={24} />
+          </div>
+        )}
       </div>
 
       {/* Stats grid */}

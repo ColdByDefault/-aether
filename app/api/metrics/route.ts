@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { push } from '@/lib/data-bus';
+import { prisma } from '@/lib/prisma';
 
 const execAsync = promisify(exec);
 
@@ -137,6 +138,33 @@ async function refresh(): Promise<void> {
       if (metricHistory.length > HISTORY_MAX) metricHistory.shift();
       latest.history = [...metricHistory];
       push('metrics', latest);
+
+      // Persist snapshot to Postgres (fire-and-forget — never blocks the route)
+      try {
+        const bus = (globalThis as { __dataBus?: { snapshot(): Record<string, unknown> } }).__dataBus;
+        const snap = bus?.snapshot() ?? {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bat = (snap.power as any)?.batteries?.[0];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cpuTemps: Array<{ celsius: number }> = (snap.hardware as any)?.cpuTemps ?? [];
+        const validTemps = cpuTemps.filter((z) => z.celsius > 0);
+        const avgTemp = validTemps.length
+          ? validTemps.reduce((s, z) => s + z.celsius, 0) / validTemps.length
+          : null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const swapPct: number | null = (snap.hardware as any)?.swap?.usedPercent ?? null;
+
+        prisma.systemSnapshot.create({
+          data: {
+            cpuPct:     cpuUsage,
+            memPct:     memory.usedPercent,
+            swapPct:    typeof swapPct === 'number' ? swapPct : null,
+            tempC:      avgTemp,
+            powerW:     typeof bat?.powerWatts === 'number' ? bat.powerWatts : null,
+            batteryPct: typeof bat?.capacity === 'number' ? bat.capacity : null,
+          },
+        }).catch(() => {});
+      } catch {}
     } catch (err) {
       console.error('Metrics refresh error:', err);
     } finally {
