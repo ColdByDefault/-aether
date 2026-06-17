@@ -1,62 +1,11 @@
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { Bot } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-interface AnalysisResult {
-  analysis: string;
-  model: string;
-  timestamp: string;
-  nextRun: string;
-  auto: boolean;
-}
-
-function parseObservations(text: string): string[] {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const bullets = lines
-    .filter(l => /^[-•*]/.test(l))
-    .map(l => l.replace(/^[-•*]\s*/, ''));
-  return bullets.length > 0 ? bullets : lines;
-}
+import { Bot } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useAiAnalysis } from "./ai-analysis.logic"
 
 export function AiAnalysis() {
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [nextRun, setNextRun] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/analyze')
-      .then(r => r.json())
-      .then(data => {
-        if (data?.nextRun) setNextRun(data.nextRun);
-        if (data?.analysis) setResult(data as AnalysisResult);
-      })
-      .catch(() => {});
-  }, []);
-
-  const analyze = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/analyze', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error ?? 'Analysis failed');
-      const r = data as AnalysisResult;
-      setResult(r);
-      if (r.nextRun) setNextRun(r.nextRun);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const observations = result ? parseObservations(result.analysis) : [];
-  const nextRunLabel = nextRun
-    ? new Date(nextRun).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    : null;
+  const { result, loading, error, observations, nextRunLabel, analyze } = useAiAnalysis()
 
   return (
     <section id="ai" className="scroll-mt-20">
@@ -75,12 +24,13 @@ export function AiAnalysis() {
       <div className="panel">
         <div className="panel-header">
           <span className="font-mono text-xs text-muted-foreground">
-            {loading ? 'querying model...' : result ? 'analysis ready' : 'idle'}
+            {loading ? "querying model..." : result ? "analysis ready" : "idle"}
           </span>
           <span className="flex-1" />
           {nextRunLabel && !loading && (
             <span className="font-mono text-xs text-muted-foreground/50 mr-3">
-              daily · {nextRunLabel} <span className="ml-1 text-muted-foreground/40 border border-border p-1">-agent</span>
+              daily · {nextRunLabel}{" "}
+              <span className="ml-1 text-muted-foreground/40 border border-border p-1">-agent</span>
             </span>
           )}
           <Button
@@ -90,7 +40,7 @@ export function AiAnalysis() {
             disabled={loading}
             className="font-mono h-auto px-0 text-primary"
           >
-            {loading ? '...' : 'Analyze System ▶'}
+            {loading ? "..." : "Analyze System ▶"}
           </Button>
         </div>
 
@@ -129,5 +79,5 @@ export function AiAnalysis() {
         )}
       </div>
     </section>
-  );
+  )
 }

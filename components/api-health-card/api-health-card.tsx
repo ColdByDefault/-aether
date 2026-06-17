@@ -1,6 +1,5 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,44 +24,17 @@ import {
 } from "@/components/ui/select"
 import { Activity, ChevronDown, RefreshCw, Zap } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import {
+  type ApiHealthCardProps,
+  type HttpMethod,
+  type RouteResult,
+  type RouteStatus,
+  type TestDialogData,
+  METHOD_COLORS,
+  useApiHealthCard,
+} from "./api-health-card.logic"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-type RouteStatus = "idle" | "loading" | "ok" | "error"
-
-interface RouteResult {
-  route: string
-  method: HttpMethod
-  status: RouteStatus
-  httpStatus?: number
-  latency?: number
-  error?: string
-  responseBody?: unknown
-  testedAt?: Date
-}
-
-interface TestDialogData {
-  route: string
-  method: HttpMethod
-  httpStatus?: number
-  latency?: number
-  error?: string
-  responseBody?: unknown
-  testedAt?: Date
-}
-
-const HTTP_METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-
-const METHOD_COLORS: Record<HttpMethod, string> = {
-  GET:    "text-emerald-600 dark:text-emerald-400",
-  POST:   "text-blue-600 dark:text-blue-400",
-  PUT:    "text-amber-600 dark:text-amber-400",
-  PATCH:  "text-violet-600 dark:text-violet-400",
-  DELETE: "text-destructive",
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Atoms ────────────────────────────────────────────────────────────────────
 
 function StatusDot({ status }: { status: RouteStatus }) {
   return (
@@ -138,7 +110,7 @@ function ResponseDialog({
   )
 }
 
-// ─── Route row ────────────────────────────────────────────────────────────────
+// ─── Route Row ────────────────────────────────────────────────────────────────
 
 function RouteRow({
   result,
@@ -151,9 +123,10 @@ function RouteRow({
   onMethodChange: (route: string, method: HttpMethod) => void
   onViewResponse: (data: TestDialogData) => void
 }) {
-  const { route, method, status, httpStatus, latency, error, responseBody, testedAt } = result
-  const isLoading = status === "loading"
-  const hasTested = status === "ok" || status === "error"
+  const { route, method, supportedMethods, dynamic, status, httpStatus, latency, error, responseBody, testedAt } = result
+  const isLoading   = status === "loading"
+  const hasTested   = status === "ok" || status === "error"
+  const canAutoTest = method === "GET" && !dynamic
 
   return (
     <div className="flex items-center gap-2 px-4 py-2.5 hover:bg-muted/40 transition-colors group">
@@ -169,7 +142,7 @@ function RouteRow({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {HTTP_METHODS.map((m) => (
+          {supportedMethods.map((m) => (
             <SelectItem key={m} value={m} className={cn("text-xs font-mono font-semibold", METHOD_COLORS[m])}>
               {m}
             </SelectItem>
@@ -178,6 +151,10 @@ function RouteRow({
       </Select>
 
       <code className="flex-1 text-sm font-mono text-foreground truncate min-w-0">{route}</code>
+
+      {dynamic && (
+        <Badge variant="outline" className="text-xs shrink-0 font-mono text-muted-foreground">dynamic</Badge>
+      )}
 
       {latency !== undefined && (
         <span className="text-xs text-muted-foreground tabular-nums shrink-0">{latency}ms</span>
@@ -212,145 +189,59 @@ function RouteRow({
         </Button>
       )}
 
-      <Button
-        size="sm"
-        variant="ghost"
-        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2 shrink-0"
-        disabled={isLoading}
-        onClick={() => onTest(route, method)}
-        aria-label={`Test ${method} ${route}`}
-      >
-        <Zap className={cn(isLoading && "animate-spin")} />
-        {isLoading ? "Testing…" : "Test"}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger>
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2"
+              disabled={isLoading || !canAutoTest}
+              onClick={() => onTest(route, method)}
+              aria-label={`Test ${method} ${route}`}
+            >
+              <Zap className={cn(isLoading && "animate-spin")} />
+              {isLoading ? "Testing…" : "Test"}
+            </Button>
+          </span>
+        </TooltipTrigger>
+        {!canAutoTest && (
+          <TooltipContent side="left" className="max-w-xs">
+            <p className="text-xs">
+              {dynamic
+                ? "Needs a real ID — can't auto-test dynamic routes."
+                : "Needs a request body — can't auto-test write routes."}
+            </p>
+          </TooltipContent>
+        )}
+      </Tooltip>
     </div>
   )
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
-interface ApiHealthCardProps {
-  healthEndpoint?: string
-  autoTest?: boolean
-  className?: string
-}
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ApiHealthCard({
   healthEndpoint = "/api/health",
   autoTest = false,
   className,
 }: ApiHealthCardProps) {
-  const [routes, setRoutes] = useState<RouteResult[]>([])
-  const [scanning, setScanning] = useState(true)
-  const [globalLoading, setGlobalLoading] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [dialogData, setDialogData] = useState<TestDialogData | null>(null)
-  const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    async function discover() {
-      setScanning(true)
-      try {
-        const res = await fetch(healthEndpoint)
-        const { routes: discovered } = (await res.json()) as { routes: string[] }
-        setRoutes(discovered.map((r) => ({ route: r, method: "GET" as HttpMethod, status: "idle" as RouteStatus })))
-      } catch {
-        setRoutes([])
-      } finally {
-        setScanning(false)
-      }
-    }
-    discover()
-  }, [healthEndpoint])
-
-  useEffect(() => {
-    if (autoTest && routes.length > 0 && routes.every((r) => r.status === "idle")) {
-      testAll()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoTest, routes.length])
-
-  const changeMethod = useCallback((route: string, method: HttpMethod) => {
-    setRoutes((prev) => prev.map((r) => (r.route === route ? { ...r, method } : r)))
-  }, [])
-
-  const testRoute = useCallback(
-    async (route: string, method: HttpMethod = "GET") => {
-      setRoutes((prev) =>
-        prev.map((r) =>
-          r.route === route ? { ...r, method, status: "loading", error: undefined, responseBody: undefined } : r,
-        ),
-      )
-      try {
-        const res = await fetch(healthEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ route, method }),
-        })
-        const data = (await res.json()) as { ok: boolean; status: number; latency: number; error?: string; body?: unknown }
-        const result: Partial<RouteResult> = {
-          status: data.ok ? "ok" : "error",
-          httpStatus: data.status,
-          latency: data.latency,
-          error: data.error,
-          responseBody: data.body,
-          testedAt: new Date(),
-        }
-        setRoutes((prev) => prev.map((r) => (r.route === route ? { ...r, ...result } : r)))
-        setDialogData({ route, method, httpStatus: data.status, latency: data.latency, error: data.error, responseBody: data.body, testedAt: new Date() })
-        setDialogOpen(true)
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Network error"
-        setRoutes((prev) =>
-          prev.map((r) => (r.route === route ? { ...r, status: "error", error: errorMsg, testedAt: new Date() } : r)),
-        )
-        setDialogData({ route, method, error: errorMsg, testedAt: new Date() })
-        setDialogOpen(true)
-      }
-    },
-    [healthEndpoint],
-  )
-
-  const testAll = useCallback(async () => {
-    setGlobalLoading(true)
-    await Promise.allSettled(
-      routes.map((r) =>
-        fetch(healthEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ route: r.route, method: r.method }),
-        })
-          .then((res) => res.json())
-          .then((data: { ok: boolean; status: number; latency: number; error?: string; body?: unknown }) => {
-            setRoutes((prev) =>
-              prev.map((p) =>
-                p.route === r.route
-                  ? { ...p, status: data.ok ? "ok" : "error", httpStatus: data.status, latency: data.latency, error: data.error, responseBody: data.body, testedAt: new Date() }
-                  : p,
-              ),
-            )
-          })
-          .catch(() => {
-            setRoutes((prev) =>
-              prev.map((p) => (p.route === r.route ? { ...p, status: "error", error: "Network error", testedAt: new Date() } : p)),
-            )
-          }),
-      ),
-    )
-    setGlobalLoading(false)
-  }, [routes, healthEndpoint])
-
-  const okCount     = routes.filter((r) => r.status === "ok").length
-  const errorCount  = routes.filter((r) => r.status === "error").length
-  const testedCount = okCount + errorCount
-
-  const summary = scanning
-    ? "scanning routes…"
-    : routes.length === 0
-      ? "no routes found"
-      : testedCount > 0
-        ? `${okCount} ok · ${errorCount} failed · ${routes.length - testedCount} untested`
-        : `${routes.length} route${routes.length !== 1 ? "s" : ""} discovered`
+  const {
+    routes,
+    scanning,
+    globalLoading,
+    dialogOpen,
+    dialogData,
+    open,
+    summary,
+    autoTestCount,
+    testRoute,
+    testAll,
+    changeMethod,
+    openDialog,
+    setDialogOpen,
+    setOpen,
+  } = useApiHealthCard(healthEndpoint, autoTest)
 
   return (
     <>
@@ -369,7 +260,7 @@ export function ApiHealthCard({
             onClick={testAll}
           >
             <RefreshCw className={cn("h-3 w-3", globalLoading && "animate-spin")} />
-            {globalLoading ? "testing…" : "test all"}
+            {globalLoading ? "testing…" : `test all${autoTestCount < routes.length ? ` (${autoTestCount})` : ""}`}
           </Button>
           <CollapsibleTrigger className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer">
             <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
@@ -396,10 +287,7 @@ export function ApiHealthCard({
                   result={result}
                   onTest={testRoute}
                   onMethodChange={changeMethod}
-                  onViewResponse={(data) => {
-                    setDialogData(data)
-                    setDialogOpen(true)
-                  }}
+                  onViewResponse={openDialog}
                 />
               ))
             )}
