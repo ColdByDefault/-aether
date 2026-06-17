@@ -6,6 +6,7 @@ allowBuilds:
   node-pty: true
   prisma: set this to true or false
   sharp: set this to true or false
+  unrs-resolver: set this to true or false
 
 # Other transitive deps (sharp, msw, …) ship prebuilt binaries or only need
 # their build scripts for browser/dev use, so we don't build them. pnpm v11
