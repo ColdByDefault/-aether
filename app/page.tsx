@@ -1,55 +1,64 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Monitor, Network, ScrollText, TerminalSquare, SquareLibrary, ArrowRight } from 'lucide-react';
-import { HeroSection } from '@/components/hero-section';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  Monitor,
+  Network,
+  ScrollText,
+  TerminalSquare,
+  SquareLibrary,
+  ArrowRight,
+} from "lucide-react";
+import { HeroSection } from "@/components/hero-section";
 
 const SECTIONS = [
   {
-    href: '/system',
+    href: "/system",
     icon: Monitor,
-    title: 'System',
-    description: 'CPU, memory, storage, temperature, swap & power metrics.',
-    items: ['System Overview', 'CPU Temperature', 'Swap Usage', 'Power'],
+    title: "System",
+    description: "CPU, memory, storage, temperature, swap & power metrics.",
+    items: ["System Overview", "CPU Temperature", "Swap Usage", "Power"],
   },
   {
-    href: '/api-network',
+    href: "/api-network",
     icon: Network,
-    title: 'API & Network',
-    description: 'Live health checks across services, endpoints & open ports.',
-    items: ['Service Probe', 'API Health', 'Open Ports'],
+    title: "API & Network",
+    description: "Live health checks across services, endpoints & open ports.",
+    items: ["Service Probe", "API Health", "Open Ports"],
   },
   {
-    href: '/logs',
+    href: "/logs",
     icon: ScrollText,
-    title: 'Logs',
-    description: 'AI-powered health analysis and a live stream of system events.',
-    items: ['AI Health Analysis', 'Recent Events'],
+    title: "Logs",
+    description:
+      "AI-powered health analysis and a live stream of system events.",
+    items: ["AI Health Analysis", "Recent Events"],
   },
   {
-    href: '/terminal',
+    href: "/terminal",
     icon: TerminalSquare,
-    title: 'Terminal',
-    description: 'Browser-based shell for quick commands on the host.',
+    title: "Terminal",
+    description: "Browser-based shell for quick commands on the host.",
     items: [],
   },
   {
-    href: '/library',
+    href: "/library",
     icon: SquareLibrary,
-    title: 'Library',
-    description: 'Upload and read PDF & Markdown documents in the browser.',
+    title: "Library",
+    description: "Upload and read PDF & Markdown documents in the browser.",
     items: [],
   },
 ];
 
 export default function Page() {
-  const [time, setTime] = useState<string>('');
+  const [time, setTime] = useState<string>("");
 
   useEffect(() => {
-    setTime(new Date().toISOString().replace('T', ' ').slice(0, 19) + 'Z');
+    setTime(new Date().toISOString().replace("T", " ").slice(0, 19) + "Z");
     const ti = setInterval(
-      () => setTime(new Date().toISOString().replace('T', ' ').slice(0, 19) + 'Z'),
+      () =>
+        setTime(new Date().toISOString().replace("T", " ").slice(0, 19) + "Z"),
       1000,
     );
     return () => clearInterval(ti);
@@ -57,8 +66,7 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <main className="flex-1 px-4 py-4 lg:px-6 lg:py-5">
-
+      <main className="px-4 py-4 lg:px-6 lg:py-5 grow-0">
         {/* Hero */}
         <div className="mb-8">
           <HeroSection />
@@ -71,7 +79,7 @@ export default function Page() {
         </div>
 
         {/* Nav card grid */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 items-start">
           {SECTIONS.map(({ href, icon: Icon, title, description, items }) => (
             <Link
               key={href}
@@ -93,7 +101,10 @@ export default function Page() {
               {items.length > 0 && (
                 <ul className="mt-auto flex flex-wrap gap-x-3 gap-y-1">
                   {items.map((item) => (
-                    <li key={item} className="font-mono text-[11px] text-muted-foreground/50">
+                    <li
+                      key={item}
+                      className="font-mono text-[11px] text-muted-foreground/50"
+                    >
                       · {item}
                     </li>
                   ))}
@@ -105,10 +116,10 @@ export default function Page() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border px-4 py-4 lg:px-6">
+      <footer className="mt-auto border-t border-border px-4 py-4 lg:px-6">
         <div className="flex flex-col gap-1 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>aether-daemon</span>
-          <span className="text-muted-foreground/50">{time || '—'}</span>
+          <span className="text-muted-foreground/50">{time || "—"}</span>
         </div>
       </footer>
     </div>
