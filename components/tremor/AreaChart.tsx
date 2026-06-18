@@ -477,6 +477,7 @@ interface AreaChartProps extends React.HTMLAttributes<HTMLDivElement> {
   categories: string[];
   colors?: AvailableChartColorsKeys[];
   valueFormatter?: (value: number) => string;
+  xAxisFormatter?: (value: string | number) => string;
   startEndOnly?: boolean;
   showXAxis?: boolean;
   showYAxis?: boolean;
@@ -510,6 +511,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
       index,
       colors = AvailableChartColors,
       valueFormatter = (value: number) => value.toString(),
+      xAxisFormatter = (value: string | number) => String(value),
       startEndOnly = false,
       showXAxis = true,
       showYAxis = true,
@@ -724,6 +726,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 hide={!showXAxis}
                 dataKey={index}
                 interval={startEndOnly ? "preserveStartEnd" : intervalType}
+                tickFormatter={xAxisFormatter}
                 tick={{ transform: "translate(0, 6)" }}
                 ticks={
                   startEndOnly
@@ -795,7 +798,10 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 offset={20}
                 position={{ y: 0 }}
                 content={({ active, payload, label }) => {
-                  const labelStr = label != null ? String(label) : "";
+                  const labelStr =
+                    label != null
+                      ? xAxisFormatter(label as string | number)
+                      : "";
                   const cleanPayload: TooltipProps["payload"] = payload
                     ? payload.map((item: any) => ({
                         category: item.dataKey,

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { AreaChart } from '@/components/tremor/AreaChart';
+import { useEffect, useState } from "react";
+import { AreaChart } from "@/components/tremor/AreaChart";
 
 interface HistoryBucket {
   ts: string;
@@ -13,7 +13,7 @@ interface HistoryBucket {
   batteryPct: number | null;
 }
 
-export type HistoryMetric = keyof Omit<HistoryBucket, 'ts'>;
+export type HistoryMetric = keyof Omit<HistoryBucket, "ts">;
 
 interface HistorySparklineProps {
   metric: HistoryMetric;
@@ -26,15 +26,19 @@ interface HistorySparklineProps {
 }
 
 function formatTime(ts: string): string {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  return new Date(ts).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 export function HistorySparkline({
   metric,
   maxVal,
   height = 80,
-  className = '',
-  unit = '%',
+  className = "",
+  unit = "%",
 }: HistorySparklineProps) {
   const [data, setData] = useState<{ time: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +48,7 @@ export function HistorySparkline({
 
     async function load() {
       try {
-        const res = await fetch('/api/metrics/history');
+        const res = await fetch("/api/metrics/history");
         if (!res.ok) return;
         const json: { buckets: HistoryBucket[] } = await res.json();
         if (cancelled) return;
@@ -63,8 +67,10 @@ export function HistorySparkline({
 
         setData(
           raw.map((r) => ({
-            time: formatTime(r.ts),
-            value: scale ? parseFloat(((r.val / scale) * 100).toFixed(1)) : parseFloat(r.val.toFixed(1)),
+            time: r.ts,
+            value: scale
+              ? parseFloat(((r.val / scale) * 100).toFixed(1))
+              : parseFloat(r.val.toFixed(1)),
           })),
         );
       } catch {
@@ -85,7 +91,9 @@ export function HistorySparkline({
   if (loading) {
     return (
       <div style={{ height }} className={`flex items-center ${className}`}>
-        <span className="font-mono text-[10px] text-muted-foreground/30">loading history…</span>
+        <span className="font-mono text-[10px] text-muted-foreground/30">
+          loading history…
+        </span>
       </div>
     );
   }
@@ -93,7 +101,9 @@ export function HistorySparkline({
   if (data.length < 2) {
     return (
       <div style={{ height }} className={`flex items-center ${className}`}>
-        <span className="font-mono text-[10px] text-muted-foreground/30">collecting…</span>
+        <span className="font-mono text-[10px] text-muted-foreground/30">
+          collecting…
+        </span>
       </div>
     );
   }
@@ -103,7 +113,8 @@ export function HistorySparkline({
       <AreaChart
         data={data}
         index="time"
-        categories={['value']}
+        xAxisFormatter={(v) => formatTime(String(v))}
+        categories={["value"]}
         valueFormatter={(v) => `${v}${unit}`}
         showLegend={false}
         showYAxis={false}
@@ -111,7 +122,7 @@ export function HistorySparkline({
         showXAxis
         startEndOnly
         className="h-full w-full"
-        colors={['blue']}
+        colors={["blue"]}
       />
     </div>
   );
