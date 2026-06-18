@@ -1,4 +1,5 @@
 import { ServiceProbe } from '@/components/network/service-probe';
+import { DozzleCard } from '@/components/network/dozzle-card/dozzle-card';
 import { ApiHealthCard } from '@/components/api-health-card';
 import { OpenPorts } from '@/components/network/open-ports';
 
@@ -18,6 +19,7 @@ export default function ApiNetworkPage() {
       <div className="flex flex-col gap-4 xl:grid xl:grid-cols-2">
         <div className="flex flex-col gap-4">
           <ServiceProbe />
+          <DozzleCard />
           <OpenPorts />
         </div>
         <div className="flex flex-col gap-4">

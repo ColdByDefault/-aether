@@ -1,6 +1,6 @@
 'use client';
 
-import { Monitor, Network, ScrollText, TerminalSquare, SquareLibrary, Container, Key } from 'lucide-react';
+import { Monitor, Network, ScrollText, TerminalSquare, SquareLibrary, Key } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
@@ -42,15 +42,6 @@ export function Navbar() {
               {label}
             </Link>
           ))}
-
-          <Link
-            href="http://192.168.2.100:3002/"
-            target="_blank"
-            className="flex items-center gap-1.5 transition-colors hover:text-foreground"
-          >
-            <Container className="h-3.5 w-3.5" />
-            <span>Dozzle</span>
-          </Link>
         </nav>
 
         <div className="hidden lg:flex">
