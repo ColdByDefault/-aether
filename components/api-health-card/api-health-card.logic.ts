@@ -52,8 +52,6 @@ export function useApiHealthCard(healthEndpoint: string, autoTest: boolean) {
   const [globalLoading, setGlobalLoading] = useState(false)
   const [dialogOpen, setDialogOpen]   = useState(false)
   const [dialogData, setDialogData]   = useState<TestDialogData | null>(null)
-  const [open, setOpen]               = useState(false)
-
   useEffect(() => {
     async function discover() {
       setScanning(true)
@@ -213,7 +211,6 @@ export function useApiHealthCard(healthEndpoint: string, autoTest: boolean) {
     globalLoading,
     dialogOpen,
     dialogData,
-    open,
     summary,
     autoTestCount,
     testRoute,
@@ -221,6 +218,5 @@ export function useApiHealthCard(healthEndpoint: string, autoTest: boolean) {
     changeMethod,
     openDialog,
     setDialogOpen,
-    setOpen,
   }
 }

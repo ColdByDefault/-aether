@@ -53,7 +53,9 @@ export default function RootLayout({
           <SystemDataProvider>
             <TooltipProvider>
               <Navbar />
-              {children}
+              <div className="mx-auto w-full max-w-[1408px]">
+                {children}
+              </div>
             </TooltipProvider>
           </SystemDataProvider>
         </ThemeProvider>

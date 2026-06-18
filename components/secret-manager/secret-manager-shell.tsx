@@ -18,7 +18,7 @@ function copyToClipboard(text: string) {
   return Promise.resolve()
 }
 import {
-  Eye, EyeOff, Copy, Trash2, Plus, KeyRound, Lock, ChevronDown, ChevronUp,
+  Eye, EyeOff, Copy, Trash2, Plus, KeyRound, Lock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -82,8 +82,6 @@ export function SecretManagerShell() {
   const [deleteTarget, setDeleteTarget] = useState<Secret | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
-  // Expanded notes
-  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set())
 
   async function fetchSecrets() {
     setLoading(true)
@@ -247,15 +245,6 @@ export function SecretManagerShell() {
     }
   }
 
-  function toggleNotes(id: string) {
-    setExpandedNotes((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
   const revealedMap = new Map(revealed.map((r) => [r.id, r]))
 
   return (
@@ -294,7 +283,6 @@ export function SecretManagerShell() {
           {secrets.map((secret) => {
             const isShowing = showValues.has(secret.id)
             const cachedValue = revealedMap.get(secret.id)
-            const notesExpanded = expandedNotes.has(secret.id)
 
             return (
               <div
@@ -325,24 +313,9 @@ export function SecretManagerShell() {
 
                     {/* Notes */}
                     {secret.notes && (
-                      <div className="mt-2">
-                        <button
-                          onClick={() => toggleNotes(secret.id)}
-                          className="flex items-center gap-1 font-mono text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors"
-                        >
-                          {notesExpanded ? (
-                            <ChevronUp className="h-3 w-3" />
-                          ) : (
-                            <ChevronDown className="h-3 w-3" />
-                          )}
-                          notes
-                        </button>
-                        {notesExpanded && (
-                          <p className="mt-1 font-mono text-xs text-muted-foreground leading-relaxed">
-                            {secret.notes}
-                          </p>
-                        )}
-                      </div>
+                      <p className="mt-2 font-mono text-xs text-muted-foreground/70 leading-relaxed">
+                        {secret.notes}
+                      </p>
                     )}
                   </div>
 
