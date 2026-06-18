@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Sparkline } from '@/components/sparkline';
+import { AreaChart } from '@/components/tremor/AreaChart';
 
 interface HistoryBucket {
   ts: string;
@@ -17,22 +17,26 @@ export type HistoryMetric = keyof Omit<HistoryBucket, 'ts'>;
 
 interface HistorySparklineProps {
   metric: HistoryMetric;
-  /** Current value used for color thresholding (0–100 scale). */
-  pct?: number;
-  /** If set, raw values are scaled: normalized = (value / maxVal) * 100. */
+  /** Used for scale ceiling when values exceed 100 (e.g. tempC, powerW). */
   maxVal?: number;
   height?: number;
   className?: string;
+  /** Label shown on the Y-axis tooltip (e.g. "°C", "W", "%"). */
+  unit?: string;
+}
+
+function formatTime(ts: string): string {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 export function HistorySparkline({
   metric,
-  pct = 0,
   maxVal,
-  height = 32,
+  height = 80,
   className = '',
+  unit = '%',
 }: HistorySparklineProps) {
-  const [points, setPoints] = useState<number[]>([]);
+  const [data, setData] = useState<{ time: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,19 +50,23 @@ export function HistorySparkline({
         if (cancelled) return;
 
         const raw = json.buckets
-          .map((b) => b[metric])
-          .filter((v): v is number => v != null);
+          .filter((b) => b[metric] != null)
+          .map((b) => ({ ts: b.ts, val: b[metric] as number }));
 
         if (raw.length < 2) {
-          setPoints([]);
+          setData([]);
           return;
         }
 
-        // Determine scale ceiling: explicit maxVal, or auto-detect if values exceed 100.
-        const dataMax = Math.max(...raw);
-        const scale = maxVal ?? (dataMax > 100 ? dataMax : 100);
-        const normalized = raw.map((v) => Math.min(100, Math.max(0, (v / scale) * 100)));
-        setPoints(normalized);
+        const dataMax = Math.max(...raw.map((r) => r.val));
+        const scale = maxVal ?? (dataMax > 100 ? dataMax : null);
+
+        setData(
+          raw.map((r) => ({
+            time: formatTime(r.ts),
+            value: scale ? parseFloat(((r.val / scale) * 100).toFixed(1)) : parseFloat(r.val.toFixed(1)),
+          })),
+        );
       } catch {
         // silently ignore — history is non-critical
       } finally {
@@ -74,23 +82,37 @@ export function HistorySparkline({
     };
   }, [metric, maxVal]);
 
-  if (loading || points.length < 2) {
+  if (loading) {
     return (
       <div style={{ height }} className={`flex items-center ${className}`}>
-        <span className="font-mono text-[10px] text-muted-foreground/30">
-          {loading ? 'loading history…' : 'collecting…'}
-        </span>
+        <span className="font-mono text-[10px] text-muted-foreground/30">loading history…</span>
+      </div>
+    );
+  }
+
+  if (data.length < 2) {
+    return (
+      <div style={{ height }} className={`flex items-center ${className}`}>
+        <span className="font-mono text-[10px] text-muted-foreground/30">collecting…</span>
       </div>
     );
   }
 
   return (
-    <div className={className}>
-      <Sparkline data={points} pct={pct} height={height} />
-      <div className="flex justify-between font-mono text-[10px] text-muted-foreground/30 mt-0.5">
-        <span>−24h</span>
-        <span>now</span>
-      </div>
+    <div className={className} style={{ height }}>
+      <AreaChart
+        data={data}
+        index="time"
+        categories={['value']}
+        valueFormatter={(v) => `${v}${unit}`}
+        showLegend={false}
+        showYAxis={false}
+        showGridLines={false}
+        showXAxis
+        startEndOnly
+        className="h-full w-full"
+        colors={['blue']}
+      />
     </div>
   );
 }

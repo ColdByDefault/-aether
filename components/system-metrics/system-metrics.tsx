@@ -182,8 +182,7 @@ export function SystemMetrics() {
                 </div>
                 <HistorySparkline
                   metric="cpuPct"
-                  pct={data.cpu.usedPercent}
-                  height={28}
+                  height={80}
                 />
                 <p
                   className="truncate font-mono text-xs text-muted-foreground/70"
@@ -231,8 +230,7 @@ export function SystemMetrics() {
                 </div>
                 <HistorySparkline
                   metric="memPct"
-                  pct={data.memory.usedPercent}
-                  height={28}
+                  height={80}
                 />
                 {procs.length > 0 && (
                   <ProcessList

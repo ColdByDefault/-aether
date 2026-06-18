@@ -86,8 +86,7 @@ function BatteryCard({
           </p>
           <HistorySparkline
             metric="batteryPct"
-            pct={bat.capacity}
-            height={24}
+            height={80}
           />
         </div>
         {bat.powerWatts > 0 && (
@@ -97,8 +96,8 @@ function BatteryCard({
             </p>
             <HistorySparkline
               metric="powerW"
-              pct={Math.min(100, bat.powerWatts * 4)}
-              height={24}
+              height={80}
+              unit="W"
             />
           </div>
         )}

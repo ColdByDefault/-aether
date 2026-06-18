@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Activity, RefreshCw, Zap } from "lucide-react"
+import { BarList } from "@/components/tremor/BarList"
 import {
   type ApiHealthCardProps,
   type HttpMethod,
@@ -284,6 +285,33 @@ export function ApiHealthCard({
           )}
         </div>
       </div>
+
+      {/* Latency ranking */}
+      {(() => {
+        const ranked = routes
+          .filter((r) => r.latency !== undefined)
+          .sort((a, b) => (b.latency ?? 0) - (a.latency ?? 0))
+          .slice(0, 8)
+          .map((r) => ({ name: r.route, value: r.latency ?? 0 }))
+        if (ranked.length === 0) return null
+        return (
+          <div className={cn("panel mt-2", className)}>
+            <div className="panel-header">
+              <Activity className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                Latency Ranking
+              </span>
+            </div>
+            <div className="p-4">
+              <BarList
+                data={ranked}
+                valueFormatter={(v) => `${v}ms`}
+                className="font-mono text-xs"
+              />
+            </div>
+          </div>
+        )
+      })()}
 
       <ResponseDialog data={dialogData} open={dialogOpen} onOpenChange={setDialogOpen} />
     </>

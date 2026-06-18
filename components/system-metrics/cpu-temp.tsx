@@ -92,9 +92,9 @@ export function CpuTemp() {
             </p>
             <HistorySparkline
               metric="tempC"
-              pct={zones.reduce((s, z) => s + z.celsius, 0) / zones.length}
               maxVal={100}
-              height={28}
+              height={80}
+              unit="°C"
             />
           </div>
         )}
