@@ -28,6 +28,11 @@ RUN apk add --no-cache curl docker-cli iproute2 util-linux
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+# The /api/health route discovers HTTP methods by reading each route's source
+# (regex for `export function GET|POST|DELETE`). Without the source tree it can
+# only fall back to the build manifest, which knows paths but not methods — so
+# every route would show up as GET. Ship the source (tiny) so prod matches dev.
+COPY --from=builder /app/app ./app
 COPY package.json ./
 COPY server.mjs ./
 
