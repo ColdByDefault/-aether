@@ -727,7 +727,9 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 tick={{ transform: "translate(0, 6)" }}
                 ticks={
                   startEndOnly
-                    ? [data[0][index], data[data.length - 1][index]]
+                    ? Array.from(
+                        new Set([data[0][index], data[data.length - 1][index]]),
+                      )
                     : undefined
                 }
                 fill=""
