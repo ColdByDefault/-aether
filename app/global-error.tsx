@@ -17,9 +17,17 @@ export default function GlobalError({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.className} min-h-dvh bg-background text-foreground flex items-center justify-center antialiased p-4 sm:p-6`}
+        className={`${inter.className} min-h-dvh bg-transparent text-foreground flex items-center justify-center antialiased p-4 sm:p-6`}
       >
-        <div className="flex flex-col items-center justify-center max-w-md text-center space-y-8">
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url('/bg2.png')" }}
+          />
+          <div className="absolute inset-0 bg-background/70" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center justify-center max-w-md text-center space-y-8">
           {/* Icon & Status */}
           <div className="space-y-4 flex flex-col items-center">
             <div className="rounded-full bg-destructive/10 p-4 w-fit">

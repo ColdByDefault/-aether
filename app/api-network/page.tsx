@@ -6,7 +6,7 @@ import { OpenPorts } from '@/components/network/open-ports';
 
 export default function ApiNetworkPage() {
   return (
-    <main className="min-h-screen bg-background px-4 py-6 lg:px-6 lg:py-8">
+    <main className="min-h-screen bg-transparent px-4 py-6 lg:px-6 lg:py-8">
       <header className="mb-6">
         <h1 className="font-mono text-xl font-bold tracking-tight text-foreground">
           api &amp; network

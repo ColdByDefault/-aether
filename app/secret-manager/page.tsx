@@ -3,7 +3,7 @@ import { SecretManagerShell } from "@/components/secret-manager/secret-manager-s
 
 export default function SecretManagerPage() {
   return (
-    <main className="min-h-screen bg-background px-4 py-6 lg:px-6 lg:py-8">
+    <main className="min-h-screen bg-transparent px-4 py-6 lg:px-6 lg:py-8">
       <header className="mb-6">
         <h1 className="font-mono text-xl font-bold tracking-tight text-foreground">
           secrets

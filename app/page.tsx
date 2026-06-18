@@ -65,8 +65,8 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <main className="px-4 py-4 lg:px-6 lg:py-5 grow-0">
+    <div className="flex min-h-screen flex-col bg-transparent">
+      <main className="flex-1 px-4 py-4 lg:px-6 lg:py-5">
         {/* Hero */}
         <div className="mb-8">
           <HeroSection />
@@ -116,7 +116,7 @@ export default function Page() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-border px-4 py-4 lg:px-6">
+      <footer className="mt-auto border-t border-border bg-background/85 px-4 py-4 backdrop-blur lg:px-6">
         <div className="flex flex-col gap-1 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>aether-daemon</span>
           <span className="text-muted-foreground/50">{time || "—"}</span>

@@ -4,7 +4,7 @@ import { Home, Compass } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-dvh bg-background text-foreground flex items-center justify-center px-4 sm:px-6 lg:px-8 antialiased">
+    <div className="min-h-dvh bg-transparent text-foreground flex items-center justify-center px-4 sm:px-6 lg:px-8 antialiased">
       <div className="flex flex-col items-center justify-center max-w-md text-center space-y-8">
         {/* Icon & Status */}
         <div className="space-y-4">

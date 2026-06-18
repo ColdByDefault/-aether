@@ -1,12 +1,11 @@
-import { SystemMetrics } from '@/components/system-metrics';
-import { CpuTemp } from '@/components/system-metrics/cpu-temp';
-import { SwapUsage } from '@/components/system-metrics/swap-usage';
-import { PowerMetrics } from '@/components/power-metrics';
-
+import { SystemMetrics } from "@/components/system-metrics";
+import { CpuTemp } from "@/components/system-metrics/cpu-temp";
+import { SwapUsage } from "@/components/system-metrics/swap-usage";
+import { PowerMetrics } from "@/components/power-metrics";
 
 export default function SystemPage() {
   return (
-    <main className="min-h-screen bg-background px-4 py-6 lg:px-6 lg:py-8">
+    <main className="min-h-screen bg-transparent px-4 py-6 lg:px-6 lg:py-8">
       <header className="mb-6">
         <h1 className="font-mono text-xl font-bold tracking-tight text-foreground">
           system
